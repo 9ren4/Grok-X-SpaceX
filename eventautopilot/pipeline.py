@@ -359,7 +359,7 @@ def _safe_id(s: str) -> str:
 LEARNED_TAGS = ["learned", "run"]
 
 
-def build_learnings(spec: EventSpec, degraded: bool = False
+def build_learnings(spec: EventSpec, degraded: bool = False, memories: list[Memory] = ()
                     ) -> tuple[list[Memory], list[Entity], list[Relation]]:
     """Facts, entities and relations this run teaches the knowledge base.
 
@@ -410,6 +410,15 @@ def build_learnings(spec: EventSpec, degraded: bool = False
                                    attrs={"unit_cost": item.unit_cost, "currency": item.currency}))
             relations.append(Relation(source=f"event:{title}", relation="used_supplier",
                                       target=f"supplier:{item.label}", event_id=eid))
+
+    # Edges to what this event actually reused, so the graph shows it latching on.
+    for name in dict.fromkeys(s.volunteer for s in spec.rota if s.volunteer):
+        relations.append(Relation(source=f"volunteer:{name}", relation="ran_shift",
+                                  target=f"event:{title}", event_id=eid))
+    for prov in dict.fromkeys(m.provenance for m in memories if m.provenance):
+        if prov != title:
+            relations.append(Relation(source=f"event:{title}", relation="learned_from",
+                                      target=f"event:{prov}", event_id=eid))
     return facts, entities, relations
 
 
@@ -563,7 +572,7 @@ def run(source: str, verbose: bool = False) -> RunResult:
     # 5. remember
     t = time.perf_counter()
     learned = 0
-    facts, entities, relations = build_learnings(spec, degraded=degraded)
+    facts, entities, relations = build_learnings(spec, degraded=degraded, memories=memories)
     if degraded:
         log.add("degraded: nothing learned", since=t)
     elif memory:
@@ -576,7 +585,17 @@ def run(source: str, verbose: bool = False) -> RunResult:
     else:
         log.add("remember: skipped (no memory module)", since=t)
 
-    # 6. hours saved
+    # 6. visual (rendered before hours saved so it counts)
+    visual_path = None
+    visuals = _load("visuals", log)
+    if visuals:
+        t = time.perf_counter()
+        visual_path = _step(log, "visuals.render",
+                            lambda: visuals.render(RunResult(spec=spec, artifacts=artifacts)), None)
+        if visual_path:
+            log.add(f"visual: {visual_path}", since=t)
+
+    # 7. hours saved
     has_visual = _visual_exists(spec)
     hours, breakdown = compute_hours(spec, artifacts, has_visual)
     log.add(f"hours saved: {hours} h from {breakdown}")
@@ -588,7 +607,7 @@ def run(source: str, verbose: bool = False) -> RunResult:
                        learned=learned, hours_saved=hours,
                        hours_breakdown=breakdown, memory_stats=stats)
 
-    # 7. write JSON, then optional Notion push
+    # 8. write JSON, then publish (visual upload, Ghost draft, Notion page) and the graph
     path = OUT / f"run_{_safe_id(spec.id)}.json"
 
     def write() -> None:
@@ -598,18 +617,22 @@ def run(source: str, verbose: bool = False) -> RunResult:
     log.add(f"wrote {path}")
     write()
 
-    try:
+    face = _load("face", log)
+    if face:
         t = time.perf_counter()
-        notion = importlib.import_module("eventautopilot.notion_sync")
-        url = notion.push(result)
-        log.add(f"notion: {url}", since=t)
-    except ModuleNotFoundError as e:
-        if e.name == "eventautopilot.notion_sync":
-            log.add("notion_sync: not available yet")
-        else:
-            log.add(f"notion_sync: missing dependency {e.name}")
-    except Exception as e:  # noqa: BLE001
-        log.add(f"notion_sync: FAILED ({type(e).__name__}: {e})")
+        pub = _step(log, "face.publish",
+                    lambda: face.publish(result, visual_path=visual_path), None) or {}
+        for key in ("visual_url", "ghost_url", "notion_url"):
+            if pub.get(key):
+                log.add(f"{key.removesuffix('_url')}: {pub[key]}")
+        log.add("publish: done", since=t)
+
+    if memory:
+        t = time.perf_counter()
+        g = _step(log, "memory.graph", lambda: memory.graph(highlight_event=spec.id), None)
+        if g is not None:
+            log.add(f"graph: {len(g.get('nodes', []))} nodes, {len(g.get('edges', []))} edges",
+                    since=t)
     write()
     return result
 

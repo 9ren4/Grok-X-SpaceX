@@ -11,12 +11,13 @@ from pathlib import Path
 from .models import RunResult
 
 
-def publish(result: RunResult) -> dict:
+def publish(result: RunResult, visual_path: Path | None = None) -> dict:
+    """Pass visual_path when the square visual is already rendered, to skip re-rendering."""
     out = {"visual_path": "", "visual_url": "", "ghost_url": "", "notion_url": ""}
 
     try:
         from . import visuals
-        path = visuals.render(result)
+        path = Path(visual_path) if visual_path else visuals.render(result)
         out["visual_path"] = str(path)
         try:
             visuals.render(result, size="banner")
