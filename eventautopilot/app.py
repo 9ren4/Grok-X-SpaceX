@@ -102,8 +102,23 @@ def intake_turn(body: IntakeIn) -> dict:
             before.venue_name = before.venue_name or got["venue"]
             before.venue_city = before.venue_city or got["city"]
             luma_info = {**got, "url": before.luma_url}
+    asked = next((m["content"] for m in reversed(body.history) if m.get("role") == "assistant"), "")
+    topic = intake.current_topic(before, asked)
+    if topic in ("venue", "food") and intake.HELP.search(last):
+        # They asked us to look: stay on this question and show options instead of moving on.
+        opts = intake.suggest_options(topic, before)
+        heads = before.attendees or before.luma_registered
+        what = "food and drink" if topic == "food" else "venues"
+        reply = (f"Here's what your community has used before{f' for {heads} people' if heads else ''}. "
+                 f"Pick one, tell me something else, or say skip." if opts else
+                 f"I couldn't find any past {what} in your community's records. Search online below, "
+                 f"tell me what you have in mind, or say skip.")
+        return {"reply": reply, "brief": before.model_dump(), "done": False, "luma": luma_info,
+                "helper": None, "options": {"topic": topic, "items": opts,
+                                            "search_url": "https://www.google.com/search?q=" +
+                                            ("catering+" if topic == "food" else "event+venue+hire+") +
+                                            (before.venue_city or "London").replace(" ", "+")}}
     helper = None
-    topic = intake.current_topic(before)
     if topic in ("venue", "food") and intake.UNSURE.search(last):
         # They said what it is but not the number: let the venue/food answer land first, then look it up.
         probe = intake.step(body.history, before) if not (before.venue_name if topic == "venue" else before.food) else None

@@ -214,6 +214,33 @@ function venueCard(v) {
   return card;
 }
 
+// ---- the organiser asked us to look: past options, priced for this event; picking one answers the question
+function optionsCard(o) {
+  const card = h("div", { class: "venue" }, h("div", { class: "vbody" },
+    h("b", {}, o.items.length ? "🔎 From your community's past events" : "🔎 Nothing in your records yet")));
+  const body = $(".vbody", card);
+  for (const it of o.items) {
+    const price = it.cost != null ? `≈ £${it.cost.toLocaleString()}` : "price unknown";
+    body.append(h("div", { style: "display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:8px" },
+      h("div", {}, h("div", { style: "font-weight:600" }, `${it.label} · ${price}`),
+        h("div", { class: "sub", style: "margin:0;font-size:12px" }, it.detail + (it.seeded ? " · seeded example" : ""))),
+      h("button", { class: "small-btn", type: "button", onclick: e => {
+        for (const b of card.querySelectorAll("button")) b.disabled = true;
+        e.target.textContent = "✓ Chosen";
+        // record the choice directly; the message below just tells Grok to move on
+        if (o.topic === "food") Object.assign(brief, { food: it.food, food_supplier: it.supplier, food_cost: it.cost });
+        else Object.assign(brief, { venue_name: it.venue, venue_city: it.city || brief.venue_city, venue_cost: it.cost });
+        brief.covered = [...new Set([...(brief.covered || []), o.topic])];
+        send(o.topic === "food"
+          ? `Let's go with ${it.label}${it.cost != null ? `, about £${it.cost}` : ""}`
+          : `Let's go with ${it.venue}${it.city ? " in " + it.city : ""}${it.cost != null ? `, hire cost £${it.cost}` : ""}`);
+      } }, "Choose")));
+  }
+  body.append(h("div", { class: "actions" },
+    h("a", { class: "small-btn", href: o.search_url, target: "_blank", style: "text-decoration:none" }, "Search online ↗")));
+  return card;
+}
+
 // ---- the organiser wasn't sure: what we found, and ways to get the answer
 function helperCard(x) {
   const status = h("div", { class: "actions" });
@@ -293,6 +320,7 @@ async function send(text) {
       h("b", {}, `📋 ${turn.luma.registered} registered on Luma`), turn.luma.title || "",
       h("div", { style: "margin-top:4px" }, h("a", { href: turn.luma.url, target: "_blank" }, "Open on Luma ↗")))));
     if (turn.helper) msg.append(helperCard(turn.helper));
+    if (turn.options) msg.append(optionsCard(turn.options));
     if (turn.venue_match) msg.append(venueCard(turn.venue_match));
     else if (turn.venue_match === null) msg.append(h("div", { class: "sub" }, `Couldn't find "${brief.venue_name}" on the map; I'll keep the name as you said it.`));
     if (turn.done) {

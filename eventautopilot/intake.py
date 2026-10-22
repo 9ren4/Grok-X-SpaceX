@@ -72,6 +72,8 @@ Rules:
 - Ask ONE short, friendly question per turn about the next topic not yet in brief.covered. Skip topics the
   organiser already answered in passing (still add them to covered).
 - Update brief ONLY with facts the organiser actually said. Never guess, never fill defaults.
+- At most ONE follow-up per topic. Once the organiser has named a venue (or said there isn't one), venue is
+  covered; same for every topic. Never ask whether something is "confirmed" again.
 - If they say skip / don't know / not sure / none, add the topic to covered, record nothing, move on.
 - Amounts are plain numbers in GBP.
 - When every topic is in covered, set done=true and reply with a 2-3 line recap of what you'll use and what
@@ -105,6 +107,9 @@ def step(history: list[dict], brief: Brief, lookup: str = "") -> Turn:
                   "luma_registered", "luma_title"):
             setattr(parsed.brief, f, getattr(brief, f))
         parsed.brief.luma_url = brief.luma_url or parsed.brief.luma_url
+        for f in Brief.model_fields:  # Grok can add or change answers, never silently erase one
+            if getattr(parsed.brief, f) in ("", None, []) and getattr(brief, f) not in ("", None, []):
+                setattr(parsed.brief, f, getattr(brief, f))
         if all(t in parsed.brief.covered for t in TOPICS):
             parsed.done = True
         return parsed
@@ -170,7 +175,55 @@ def luma_registrations(url: str) -> dict | None:
 UNSURE = re.compile(r"(?i)\b(not sure|unsure|don'?t know|dunno|no idea|idk|tbc|not yet|no clue|haven'?t (?:checked|asked))\b")
 
 
-def current_topic(brief: Brief) -> str | None:
+HELP = re.compile(r"(?i)\b(look (?:for|it up|up)|find|search|suggest|recommend|options|ideas|help me|you (?:pick|choose|decide)|any idea)\b")
+FOOD_CATS = re.compile(r"(?i)pizza|cater|coffee|drink|food|vegan|snack|bakery|pastr")
+
+
+def suggest_options(topic: str, b: Brief) -> list[dict]:
+    """What the community has used before for this topic, priced for this event's headcount."""
+    try:
+        from . import memory
+        nodes = memory.graph(limit=500).get("nodes", [])
+    except Exception:  # noqa: BLE001
+        return []
+    heads = b.attendees or b.luma_registered or 0
+    out = []
+    for n in nodes:
+        a = n.get("attrs") or {}
+        if topic == "food" and n.get("kind") == "supplier" and FOOD_CATS.search(str(a.get("category", ""))):
+            cost, how = None, ""
+            if a.get("price_per_head_gbp") and heads:
+                cost = round(float(a["price_per_head_gbp"]) * heads, 2)
+                how = f"£{a['price_per_head_gbp']}/head × {heads}"
+            elif a.get("price_per_pizza_gbp") and heads:
+                pizzas = -(-heads // 4)
+                cost = round(float(a["price_per_pizza_gbp"]) * pizzas, 2)
+                how = f"{pizzas} pizzas × £{a['price_per_pizza_gbp']}"
+            what = str(a.get("category", "food")).capitalize()
+            out.append({"label": f"{what} from {n['name']}", "food": what, "supplier": n["name"], "cost": cost,
+                        "detail": "; ".join(x for x in (how, f"used at {n.get('times_used', 1)} events",
+                                                        a.get("lead_time_days") and f"{a['lead_time_days']} days notice") if x),
+                        "seeded": bool(a.get("seed"))})
+        elif topic == "venue" and n.get("kind") == "venue":
+            cap = a.get("capacity")
+            if heads and cap and int(cap) < heads:
+                continue  # too small for this event
+            cost = a.get("hire_cost_gbp")
+            out.append({"label": n["name"], "venue": n["name"], "city": a.get("area") or a.get("city", ""),
+                        "cost": float(cost) if cost is not None else None,
+                        "detail": "; ".join(str(x) for x in (cap and f"holds {cap}", a.get("quirks")) if x),
+                        "seeded": bool(a.get("seed"))})
+    out.sort(key=lambda o: (-(o["cost"] is not None), o["cost"] or 0))
+    return out[:5]
+
+
+def current_topic(brief: Brief, last_question: str = "") -> str | None:
+    """The topic of the question just asked (from its wording), else the next uncovered one."""
+    q = last_question.lower()
+    if re.search(r"food|drink|cater|supplier|pizza", q):
+        return "food"
+    if re.search(r"venue|spot|location|hire", q):
+        return "venue"
     return next((t for t in TOPICS if t not in brief.covered), None)
 
 
