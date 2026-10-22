@@ -214,6 +214,27 @@ function venueCard(v) {
   return card;
 }
 
+// ---- a supplier we have no records for: nearest branches, price search, message them
+function supplierCard(x) {
+  const out = h("div");
+  const card = h("div", { class: "venue" }, h("div", { class: "vbody" },
+    h("b", {}, `🔎 ${x.name}: not in your community's records yet`),
+    x.branches.length ? h("div", {}, `Nearest to ${x.near}:`) : h("div", {}, `Couldn't place a branch near ${x.near} on the map.`),
+    x.branches.map(br => h("div", { class: "sub", style: "margin:4px 0 0;font-size:12px" }, `${br.km} km · ${br.address.split(",").slice(0, 4).join(",")}`)),
+    h("div", { class: "sub", style: "margin-top:6px" }, brief.food_cost != null ? `Cost noted: £${brief.food_cost}` : "No price yet: I won't guess one. Check below or tell me when you know."),
+    h("div", { class: "actions" },
+      h("a", { class: "small-btn", href: x.prices_url, target: "_blank", style: "text-decoration:none" }, "Search their catering prices ↗"),
+      h("a", { class: "small-btn", href: x.maps_url, target: "_blank", style: "text-decoration:none" }, "Google Maps ↗"),
+      h("button", { class: "small-btn", type: "button", onclick: async e => {
+        e.target.disabled = true; out.replaceChildren(h("span", { class: "typing" }, "Drafting…"));
+        const r = await fetch("/api/draft", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ topic: "food", brief }) });
+        const d = await r.json();
+        out.replaceChildren(h("div", { class: "copy", style: "margin-top:8px;font-size:13px" }, d.message),
+          h("div", { class: "actions" }, h("button", { class: "small-btn", type: "button", onclick: ev => { navigator.clipboard?.writeText(d.message); ev.target.textContent = "Copied"; } }, "Copy")));
+      } }, `Message ${x.name}`)), out));
+  return card;
+}
+
 // ---- the organiser asked us to look: past options, priced for this event; picking one answers the question
 function optionsCard(o) {
   const card = h("div", { class: "venue" }, h("div", { class: "vbody" },
@@ -337,6 +358,7 @@ async function send(text) {
       h("div", { style: "margin-top:4px" }, h("a", { href: turn.luma.url, target: "_blank" }, "Open on Luma ↗")))));
     if (turn.helper) msg.append(helperCard(turn.helper));
     if (turn.options) msg.append(optionsCard(turn.options));
+    if (turn.supplier_match) msg.append(supplierCard(turn.supplier_match));
     if (turn.venue_match) msg.append(venueCard(turn.venue_match));
     else if (turn.venue_match === null) msg.append(h("div", { class: "sub" }, `Couldn't find "${brief.venue_name}" on the map; I'll keep the name as you said it.`));
     const allCovered = TOPICS_ALL.every(t => (brief.covered || []).includes(t));

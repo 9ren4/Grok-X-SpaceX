@@ -300,6 +300,39 @@ def draft_message(topic: str, b: Brief, contact: str = "") -> Draft:
                          f"{ask}?\n\nThanks,\nthe organising team")
 
 
+def lookup_supplier(name: str, b: Brief) -> dict:
+    """A supplier we have no records for: find its nearest branches to the venue (OpenStreetMap)."""
+    import math
+    centre = lookup_venue(b.venue_name, b.venue_city) if b.venue_name else None
+    lat, lon = (centre["lat"], centre["lon"]) if centre else (51.5074, -0.1278)  # central London
+    near = centre["name"] if centre else "central London (couldn't place the venue on the map)"
+    branches = []
+    # People type brands loosely ("mcdonalds"); OpenStreetMap names them properly ("McDonald's").
+    variants = list(dict.fromkeys([name, re.sub(r"(?i)s$", "'s", name.strip()), name.title()]))
+    try:
+        hits = []
+        for q_ in variants:
+            r = httpx.get("https://nominatim.openstreetmap.org/search",
+                          params={"q": q_, "format": "jsonv2", "limit": 10, "bounded": 1,
+                                  "viewbox": f"{lon - 0.04},{lat + 0.025},{lon + 0.04},{lat - 0.025}"},
+                          headers={"User-Agent": "EventAutopilot/0.1 (community events hackathon)"}, timeout=8)
+            hits = r.json() if r.status_code == 200 else []
+            if hits:
+                break
+        for h in hits:
+            hl, ho = float(h["lat"]), float(h["lon"])
+            km = 6371 * 2 * math.asin(math.sqrt(math.sin(math.radians(hl - lat) / 2) ** 2 + math.cos(math.radians(lat))
+                                                * math.cos(math.radians(hl)) * math.sin(math.radians(ho - lon) / 2) ** 2))
+            branches.append({"address": h.get("display_name", ""), "lat": hl, "lon": ho, "km": round(km, 2)})
+    except Exception:  # noqa: BLE001
+        pass
+    branches.sort(key=lambda x: x["km"])
+    q = lambda s: "https://www.google.com/search?q=" + s.replace(" ", "+")  # noqa: E731
+    return {"name": name, "near": near, "branches": branches[:3],
+            "prices_url": q(f"{name} catering order price {b.venue_city or 'London'}"),
+            "maps_url": "https://www.google.com/maps/search/?api=1&query=" + f"{name} near {near}".replace(" ", "+")}
+
+
 def to_source(b: Brief) -> str:
     """Input string for pipeline.run: the Luma link if given, else a one-liner built from the answers."""
     if b.luma_url:

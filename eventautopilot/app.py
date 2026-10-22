@@ -131,6 +131,11 @@ def intake_turn(body: IntakeIn) -> dict:
     b = turn.brief
     if b.venue_name and b.venue_name != before.venue_name:  # new venue mentioned: find it on the map
         out["venue_match"] = intake.lookup_venue(b.venue_name, b.venue_city)
+    who, was = (b.food_supplier or b.food), (before.food_supplier or before.food)
+    if who and who != was and not intake._kb_node("supplier", who):
+        found = intake.lookup_supplier(who, b)  # a company we have no records for: look it up
+        if found["branches"]:
+            out["supplier_match"] = found
     return out
 
 
