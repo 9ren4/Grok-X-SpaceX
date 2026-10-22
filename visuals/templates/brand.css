@@ -1,0 +1,91 @@
+/* Brand tokens. Change this one file to restyle every template. */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&display=block");
+
+:root {
+  /* Colours */
+  --brand-bg: #0d1f17;          /* deep forest */
+  --brand-bg-2: #143826;        /* lighter forest for shapes */
+  --brand-ink: #f3efe4;         /* warm off-white text */
+  --brand-muted: #b9c2b6;       /* secondary text */
+  --brand-accent: #c8f560;      /* lime highlight */
+  --brand-accent-ink: #0d1f17;  /* text on accent */
+  --brand-accent-2: #ff8a5c;    /* coral detail */
+  --brand-overlay: linear-gradient(180deg, rgba(8,18,13,.35) 0%, rgba(8,18,13,.72) 45%, rgba(8,18,13,.96) 100%);
+
+  /* Type */
+  --font-display: "Space Grotesk", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --font-body: "Inter", "Helvetica Neue", Arial, system-ui, sans-serif;
+
+  /* Logo slot: text mark, or set --brand-logo-url to an image url(...) */
+  --brand-name: "CLIMATE BUILDERS LDN";
+  --brand-logo-url: none;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body {
+  background: var(--brand-bg);
+  color: var(--brand-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.canvas { position: relative; overflow: hidden; background: var(--brand-bg); }
+
+/* Background layers */
+.bg-cover {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  display: none;
+}
+.has-cover .bg-cover { display: block; }
+.bg-cover::after { content: ""; position: absolute; inset: 0; background: var(--brand-overlay); }
+
+.bg-geo { position: absolute; inset: 0; }
+.has-cover .bg-geo { display: none; }
+.bg-geo .grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(243,239,228,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(243,239,228,.05) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+.bg-geo .disc {
+  position: absolute; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--brand-accent) 0%, #7fbf3a 55%, var(--brand-bg-2) 100%);
+}
+.bg-geo .ring {
+  position: absolute; border-radius: 50%;
+  border: 2px solid rgba(200,245,96,.35);
+}
+.bg-geo .bar { position: absolute; background: var(--brand-accent-2); }
+
+/* Logo / brand mark */
+.mark { display: flex; align-items: center; gap: 14px; font-family: var(--font-display); font-weight: 700; letter-spacing: .08em; }
+.mark .dot { width: 18px; height: 18px; border-radius: 50%; background: var(--brand-accent); box-shadow: 0 0 0 6px rgba(200,245,96,.18); }
+.mark .logo { background-image: var(--brand-logo-url); background-size: contain; background-repeat: no-repeat; }
+.mark .name::before { content: var(--brand-name); }
+
+.title {
+  font-family: var(--font-display); font-weight: 700;
+  line-height: 1.0; letter-spacing: -0.035em;
+  color: var(--brand-ink);
+  overflow-wrap: break-word; hyphens: manual;
+  text-wrap: balance;
+}
+.title em { font-style: normal; color: var(--brand-accent); }
+
+.pill {
+  display: inline-flex; align-items: center;
+  font-family: var(--font-display); font-weight: 700;
+  background: var(--brand-accent); color: var(--brand-accent-ink);
+  border-radius: 999px; letter-spacing: .02em;
+}
+.pill.ghost { background: transparent; color: var(--brand-ink); border: 2px solid rgba(243,239,228,.5); }
+
+.meta { font-family: var(--font-display); font-weight: 500; color: var(--brand-ink); }
+.meta .label { display: block; font-family: var(--font-body); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--brand-accent); }
+.host { font-family: var(--font-body); color: var(--brand-muted); }
+.host strong { color: var(--brand-ink); font-weight: 600; }
+.url { font-family: var(--font-display); font-weight: 500; color: var(--brand-ink); letter-spacing: .01em; }
+.url .arrow { color: var(--brand-accent); }

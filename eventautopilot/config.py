@@ -42,3 +42,8 @@ def status() -> dict:
         "ghost": HAS_GHOST,
         "luma": True,  # public API, no key
     }
+
+NOTION_TOKEN = _clean("NOTION_TOKEN")
+NOTION_PARENT_PAGE_ID = _clean("NOTION_PARENT_PAGE_ID")
+SUPABASE_ANON_KEY = _clean("SUPABASE_ANON_KEY")
+HAS_NOTION = bool(NOTION_TOKEN and NOTION_PARENT_PAGE_ID)

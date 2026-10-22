@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080, height=1080">
+<title>Event square</title>
+<link rel="stylesheet" href="brand.css">
+<style>
+  .canvas { width: 1080px; height: 1080px; }
+  .bg-geo .disc { width: 620px; height: 620px; right: -190px; top: -170px; }
+  .bg-geo .ring.r1 { width: 820px; height: 820px; right: -290px; top: -270px; }
+  .bg-geo .ring.r2 { width: 1020px; height: 1020px; right: -390px; top: -370px; border-color: rgba(200,245,96,.15); }
+  .bg-geo .bar { display: none; }
+  .title::before { content: ""; display: block; width: 120px; height: 12px; background: var(--brand-accent-2); margin-bottom: 36px; }
+
+  .content { position: absolute; inset: 0; padding: 72px 80px 64px; display: flex; flex-direction: column; }
+  .top { display: flex; justify-content: space-between; align-items: center; }
+  .mark { font-size: 24px; }
+  .pill.ghost { font-size: 22px; padding: 10px 22px; text-transform: uppercase; letter-spacing: .12em; }
+  .has-cover .pill.ghost, :not(.has-cover) .pill.ghost { backdrop-filter: blur(6px); background: rgba(13,31,23,.35); }
+
+  .main { margin-top: auto; }
+  .title { font-size: 128px; max-height: 420px; margin-bottom: 44px; }
+
+  .meta-row { display: flex; gap: 48px; align-items: flex-end; padding-top: 36px; border-top: 2px solid rgba(243,239,228,.18); }
+  .meta { font-size: 38px; line-height: 1.15; }
+  .meta .label { font-size: 17px; margin-bottom: 10px; }
+  .meta .sub { display: block; color: var(--brand-muted); font-size: 28px; margin-top: 4px; }
+  .meta.venue { flex: 1; min-width: 0; }
+  .meta.venue .v { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meta.venue #venue { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .meta.venue.long #venue { font-size: 30px; }
+  .pill.price { font-size: 40px; padding: 16px 36px; flex-shrink: 0; }
+
+  .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 40px; gap: 32px; }
+  .host { font-size: 26px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .url { font-size: 26px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="canvas" id="canvas">
+  <div class="bg-cover" id="cover"></div>
+  <div class="bg-geo">
+    <div class="grid"></div>
+    <div class="ring r2"></div>
+    <div class="ring r1"></div>
+    <div class="disc"></div>
+    <div class="bar"></div>
+  </div>
+
+  <div class="content">
+    <div class="top">
+      <div class="mark"><span class="dot"></span><span class="name"></span></div>
+      <div class="pill ghost" id="format"></div>
+    </div>
+
+    <div class="main">
+      <h1 class="title" id="title"></h1>
+      <div class="meta-row">
+        <div class="meta when"><span class="label">When</span><span id="date"></span><span class="sub" id="time"></span></div>
+        <div class="meta venue"><span class="label">Where</span><span class="v" id="venue"></span><span class="sub v" id="city"></span></div>
+        <div class="pill price" id="price"></div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <div class="host" id="host"></div>
+      <div class="url" id="url"></div>
+    </div>
+  </div>
+</div>
+<script>
+/* Data arrives via window.render(data) from Python (page.evaluate argument).
+   Everything is written with textContent, so no field can inject markup. */
+function setText(id, v) { const el = document.getElementById(id); if (el) { el.textContent = v || ""; el.style.display = v ? "" : "none"; } }
+
+function fitTitle(el, maxPx, minPx) {
+  const limit = parseFloat(getComputedStyle(el).maxHeight);
+  el.style.maxHeight = "none";
+  let size = maxPx;
+  el.style.fontSize = size + "px";
+  while (size > minPx && (el.scrollHeight > limit || el.scrollWidth > el.clientWidth)) {
+    size -= 2; el.style.fontSize = size + "px";
+  }
+  el.style.lineHeight = size < 90 ? "1.04" : "1.0";
+}
+
+function loadCover(url, timeoutMs) {
+  return new Promise(resolve => {
+    if (!url) return resolve(false);
+    const img = new Image();
+    const t = setTimeout(() => resolve(false), timeoutMs);
+    img.onload = () => { clearTimeout(t); resolve(true); };
+    img.onerror = () => { clearTimeout(t); resolve(false); };
+    img.src = url;
+  });
+}
+
+window.render = async function (d) {
+  setText("title", d.title);
+  setText("format", d.format);
+  setText("date", d.date);
+  setText("time", d.time);
+  setText("venue", d.venue);
+  document.querySelector(".meta.venue").classList.toggle("long", (d.venue || "").length > 22);
+  setText("city", d.city);
+  setText("price", d.price);
+  const host = document.getElementById("host");
+  host.textContent = "";
+  if (d.hosts) { host.append("Hosted by "); const s = document.createElement("strong"); s.textContent = d.hosts; host.append(s); }
+  const url = document.getElementById("url");
+  url.textContent = "";
+  if (d.url) { const a = document.createElement("span"); a.className = "arrow"; a.textContent = "→ "; url.append(a, d.url); }
+
+  const ok = await loadCover(d.cover_url, 6000);
+  if (ok) {
+    document.getElementById("cover").style.backgroundImage = "url(" + JSON.stringify(d.cover_url) + ")";
+    document.getElementById("canvas").classList.add("has-cover");
+  }
+  try { await Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 5000))]); } catch (e) {}
+  fitTitle(document.getElementById("title"), 128, 60);
+  document.body.dataset.ready = "1";
+};
+</script>
+</body>
+</html>
