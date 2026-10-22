@@ -374,6 +374,16 @@ class Notion:
         except NotionError as e:
             log(f"archive {page_id} skipped ({e})")
 
+    def children(self, block_id: str) -> list[dict]:
+        out, cursor = [], ""
+        while True:
+            q = f"?page_size=100{'&start_cursor=' + cursor if cursor else ''}"
+            res = self.req("GET", f"/blocks/{block_id}/children{q}")
+            out += res.get("results", [])
+            cursor = res.get("next_cursor") or ""
+            if not res.get("has_more") or not cursor:
+                return out
+
 
 def _norm(i: str) -> str:
     return (i or "").replace("-", "").lower()
@@ -430,6 +440,54 @@ def _approvals_db(n: Notion, state: dict) -> tuple[str, str]:
     state["approvals_db_id"] = db["id"]
     log(f"created Approvals DB {db.get('url', db['id'])}")
     return db["id"], db.get("url", "")
+
+
+PAGE_PREFIX = "📅 "
+_HOURS_RE = re.compile(r"([\d.]+) h of volunteer admin saved")
+
+
+def _plain(block: dict) -> str:
+    return "".join(t.get("plain_text", "") for t in block.get(block["type"], {}).get("rich_text", []))
+
+
+def _sync_from_notion(n: Notion, state: dict) -> dict[str, str]:
+    """Rebuild state from what is actually on the parent page, so several machines can push
+    to the same workspace without duplicating pages or the dashboard. Returns {title: page_id}."""
+    kids = n.children(config.NOTION_PARENT_PAGE_ID)
+    dash = next((b["id"] for b in kids if b["type"] == "callout"
+                 and _plain(b).startswith("Hours saved:")), "")
+    if dash:
+        state["dashboard_block_id"] = dash
+    pages = {b["child_page"]["title"].removeprefix(PAGE_PREFIX): b["id"]
+             for b in kids if b["type"] == "child_page"
+             and b["child_page"]["title"].startswith(PAGE_PREFIX)}
+    known = {e.get("page_id"): (k, e) for k, e in state.get("events", {}).items() if e.get("page_id")}
+    events = {}
+    for title, pid in pages.items():
+        if pid in known:
+            k, e = known[pid]
+            events[k] = e
+            continue
+        hours = 0.0  # pushed from another machine: read its hours off the page
+        for b in n.children(pid)[:6]:
+            m = b["type"] == "callout" and _HOURS_RE.search(_plain(b))
+            if m:
+                hours = float(m.group(1))
+                break
+        events[f"notion:{_norm(pid)}"] = {"page_id": pid, "title": title, "hours_saved": hours}
+    state["events"] = events  # dry-run entries and pages deleted in Notion drop out
+    return pages
+
+
+def _archive_rows_for(n: Notion, db_id: str, title: str) -> None:
+    try:
+        res = n.req("POST", f"/databases/{db_id}/query", {
+            "filter": {"property": "Event", "rich_text": {"equals": title}}, "page_size": 100})
+        for row in res.get("results", []):
+            if not (row.get("archived") or row.get("in_trash")):
+                n.archive_page(row["id"])
+    except NotionError as e:
+        log(f"could not clear old approval rows ({e})")
 
 
 def _dashboard_text(state: dict) -> str:
@@ -493,25 +551,31 @@ def _push_live(result: RunResult, visual_url: str, ghost_url: str) -> str:
     key = s.id or _slug(s.title)
     n = Notion(config.NOTION_TOKEN)
     state = _load_state()
-    events = state.setdefault("events", {})
-
-    # Idempotency: archive the previous page + its approval rows for this event.
-    old = events.get(key, {})
-    if old.get("page_id"):
-        log(f"archiving previous page for {key}")
-        n.archive_page(old["page_id"])
-        for rid in old.get("approval_row_ids", []):
-            n.archive_page(rid)
+    pages = _sync_from_notion(n, state)
+    events = state["events"]
 
     _ensure_dashboard(n, state)
     _save_state(state)
     db_id, db_url = _approvals_db(n, state)
     _save_state(state)
 
+    # Idempotency: archive the previous page + approval rows for this event, whoever pushed them.
+    title = s.title or "Untitled event"
+    for k in [k for k, e in events.items() if e.get("title") == title or k == key]:
+        old = events.pop(k)
+        if old.get("page_id"):
+            log(f"archiving previous page for {title}")
+            n.archive_page(old["page_id"])
+        for rid in old.get("approval_row_ids", []):
+            n.archive_page(rid)
+    if title in pages:
+        n.archive_page(pages[title])
+    _archive_rows_for(n, db_id, title)
+
     blocks = build_blocks(result, visual_url, ghost_url, db_url)
     page: dict[str, Any] = {
         "parent": {"type": "page_id", "page_id": config.NOTION_PARENT_PAGE_ID},
-        "properties": {"title": {"title": rt(f"📅 {s.title or 'Untitled event'}")}},
+        "properties": {"title": {"title": rt(f"{PAGE_PREFIX}{title}")}},
         "children": blocks[:MAX_CHILDREN],
     }
     if _is_http(s.cover_url):
