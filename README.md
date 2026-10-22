@@ -34,11 +34,15 @@ Five sections. **Money is the hub**: every other table has a two-way relation to
 |---|---|---|
 | 💷 **Money** | Money ledger: estimated / committed / paid, source, where each number came from. Summary of projected spend and sponsor prospects | n/a |
 | 🤝 **Sponsorship** | Sponsors: past sponsors become prospects with their last amount | Expected income line |
-| 🙋 **Volunteers** | Volunteer shifts from the rota | Only if expenses are claimed |
+| 🙋 **Volunteers** | Volunteer shifts from the rota · Volunteer directory (everyone who has helped or signed up, with email, role, events helped) | Only if expenses are claimed |
 | 🏛️ **Venues** | Spots · Food suppliers | Venue hire and food lines |
 | 📣 **Posts** | Newsletter · Posters · Event page · Social posts (Discord, LinkedIn, WhatsApp group) | Printing / paid promotion |
 
 Each event also gets a page with "Needs you" (missing info), "At a glance", hours saved, run sheet, budget, rota and the community memory used. Every post starts as **Draft**. Running the same event again replaces its rows instead of duplicating them, and several machines can push to one workspace.
+
+### Volunteer sign-up
+
+Each event page links to a public sign-up form (`/volunteer?event=…`). The form asks for name, email, role and availability, plus explicit consent to store them. Sign-ups go to the knowledge base and the Notion Volunteer directory. Set `PUBLIC_BASE_URL` to an ngrok URL or a deploy so the link works for other people. Volunteer emails are never shown on the graph page.
 
 ## Quick start
 

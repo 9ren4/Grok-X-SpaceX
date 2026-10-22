@@ -43,6 +43,12 @@ def load(path: Path) -> None:
         facts = [Memory(kind=k, text=t, tags=[k, "seed"], provenance=title) for k, t in ev["facts"]]
         memory.remember(eid, facts, ents, rels)
         print(f"seeded {title}: {len(ents)} entities, {len(rels)} relations, {len(facts)} facts")
+    vols = [Entity(kind="volunteer", name=v["name"], times_used=0,
+                   attrs={k: v[k] for k in ("email", "usual_role", "availability")} | SEED)
+            for v in data.get("volunteers", [])]
+    if vols:  # contact details for the volunteer directory (fictional example.com addresses)
+        memory.remember("", [], vols, [])
+        print(f"seeded {len(vols)} volunteer contacts")
     print(f"backend: {memory.backend()}")
 
 

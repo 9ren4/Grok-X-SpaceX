@@ -4,82 +4,346 @@
     {
       "id": "seed-climate-builders-3",
       "title": "Climate Builders #3",
-      "attrs": {"date": "2026-04-23", "attendees": 55, "format": "meetup", "city": "London"},
-      "venue": ["Canary Wharf Tech Hub", "hosted"],
+      "attrs": {
+        "date": "2026-04-23",
+        "attendees": 55,
+        "format": "meetup",
+        "city": "London"
+      },
+      "venue": [
+        "Canary Wharf Tech Hub",
+        "hosted"
+      ],
       "community": "London AI Builders",
-      "suppliers": [["Slice & Co Catering", "catered"], ["Bean There Coffee Cart", "supplied"]],
-      "sponsors": [["Northwind Cloud", 1500]],
-      "volunteers": ["Priya Nair", "Tom Okafor", "Ben Whitaker"],
+      "suppliers": [
+        [
+          "Slice & Co Catering",
+          "catered"
+        ],
+        [
+          "Bean There Coffee Cart",
+          "supplied"
+        ]
+      ],
+      "sponsors": [
+        [
+          "Northwind Cloud",
+          1500
+        ]
+      ],
+      "volunteers": [
+        "Priya Nair",
+        "Tom Okafor",
+        "Ben Whitaker"
+      ],
       "facts": [
-        ["budget", "55 people got through 14 pizzas from Slice & Co (GBP 133) and 40 coffees from Bean There (GBP 112)."],
-        ["venue", "Canary Wharf Tech Hub is free for communities but security needs the guest list 48 hours ahead; 8 walk-ins were turned away."],
-        ["lesson", "Send the guest list to Canary Wharf security on Tuesday for a Thursday event."],
-        ["budget", "Northwind Cloud paid GBP 1,500 for logo placement and a 5 minute slot; invoice paid in 21 days."]
+        [
+          "budget",
+          "55 people got through 14 pizzas from Slice & Co (GBP 133) and 40 coffees from Bean There (GBP 112)."
+        ],
+        [
+          "venue",
+          "Canary Wharf Tech Hub is free for communities but security needs the guest list 48 hours ahead; 8 walk-ins were turned away."
+        ],
+        [
+          "lesson",
+          "Send the guest list to Canary Wharf security on Tuesday for a Thursday event."
+        ],
+        [
+          "budget",
+          "Northwind Cloud paid GBP 1,500 for logo placement and a 5 minute slot; invoice paid in 21 days."
+        ]
       ]
     },
     {
       "id": "seed-women-in-ai-breakfast",
       "title": "Women in AI Breakfast",
-      "attrs": {"date": "2026-05-07", "attendees": 30, "format": "social", "city": "London"},
-      "venue": ["Clerkenwell Coworking Studio", "hosted"],
+      "attrs": {
+        "date": "2026-05-07",
+        "attendees": 30,
+        "format": "social",
+        "city": "London"
+      },
+      "venue": [
+        "Clerkenwell Coworking Studio",
+        "hosted"
+      ],
       "community": "London Founders Circle",
-      "suppliers": [["Crumbs Vegan Catering", "catered"], ["Bean There Coffee Cart", "supplied"]],
-      "sponsors": [["Ledgerly", 600]],
-      "volunteers": ["Sofia Marques", "Hannah Cho"],
+      "suppliers": [
+        [
+          "Crumbs Vegan Catering",
+          "catered"
+        ],
+        [
+          "Bean There Coffee Cart",
+          "supplied"
+        ]
+      ],
+      "sponsors": [
+        [
+          "Ledgerly",
+          600
+        ]
+      ],
+      "volunteers": [
+        "Sofia Marques",
+        "Hannah Cho"
+      ],
       "facts": [
-        ["budget", "30 person breakfast: Crumbs Vegan pastries and fruit GBP 330, coffee cart GBP 84, room GBP 280."],
-        ["venue", "Clerkenwell Coworking Studio has no kitchen; caterers must deliver ready to serve by 07:45."],
-        ["voice", "Breakfast events fill fastest when the post leads with the speaker, not the food."],
-        ["budget", "Ledgerly sponsored GBP 600 and asked for a photo of the banner for their newsletter."]
+        [
+          "budget",
+          "30 person breakfast: Crumbs Vegan pastries and fruit GBP 330, coffee cart GBP 84, room GBP 280."
+        ],
+        [
+          "venue",
+          "Clerkenwell Coworking Studio has no kitchen; caterers must deliver ready to serve by 07:45."
+        ],
+        [
+          "voice",
+          "Breakfast events fill fastest when the post leads with the speaker, not the food."
+        ],
+        [
+          "budget",
+          "Ledgerly sponsored GBP 600 and asked for a photo of the banner for their newsletter."
+        ]
       ]
     },
     {
       "id": "seed-llm-hack-night",
       "title": "LLM Hack Night",
-      "attrs": {"date": "2026-07-10", "attendees": 90, "format": "hackathon", "city": "London"},
-      "venue": ["Southbank Innovation Centre", "hosted"],
+      "attrs": {
+        "date": "2026-07-10",
+        "attendees": 90,
+        "format": "hackathon",
+        "city": "London"
+      },
+      "venue": [
+        "Southbank Innovation Centre",
+        "hosted"
+      ],
       "community": "Hack London",
-      "suppliers": [["Slice & Co Catering", "catered"], ["Pint Pot Drinks Co", "supplied"], ["Lumen AV Hire", "supplied"]],
-      "sponsors": [["Northwind Cloud", 2000], ["Fennel Ventures", 800], ["Quill Analytics", 0]],
-      "volunteers": ["Jamal Reid", "Maya Kowalski", "Luca Bianchi", "Aisha Rahman", "Tom Okafor"],
+      "suppliers": [
+        [
+          "Slice & Co Catering",
+          "catered"
+        ],
+        [
+          "Pint Pot Drinks Co",
+          "supplied"
+        ],
+        [
+          "Lumen AV Hire",
+          "supplied"
+        ]
+      ],
+      "sponsors": [
+        [
+          "Northwind Cloud",
+          2000
+        ],
+        [
+          "Fennel Ventures",
+          800
+        ],
+        [
+          "Quill Analytics",
+          0
+        ]
+      ],
+      "volunteers": [
+        "Jamal Reid",
+        "Maya Kowalski",
+        "Luca Bianchi",
+        "Aisha Rahman",
+        "Tom Okafor"
+      ],
       "facts": [
-        ["budget", "90 hackers ate 26 pizzas (GBP 247) and drank GBP 585 of soft drinks and beer over 6 hours."],
-        ["budget", "Total spend GBP 2,630 against GBP 2,800 sponsorship: Northwind 2,000, Fennel 800, Quill gave swag."],
-        ["lesson", "Book Lumen AV a week ahead; the Southbank projector does not take HDMI-C."],
-        ["volunteer", "Five volunteers covered a 6 hour hackathon; one dedicated to judging logistics saved the close."]
+        [
+          "budget",
+          "90 hackers ate 26 pizzas (GBP 247) and drank GBP 585 of soft drinks and beer over 6 hours."
+        ],
+        [
+          "budget",
+          "Total spend GBP 2,630 against GBP 2,800 sponsorship: Northwind 2,000, Fennel 800, Quill gave swag."
+        ],
+        [
+          "lesson",
+          "Book Lumen AV a week ahead; the Southbank projector does not take HDMI-C."
+        ],
+        [
+          "volunteer",
+          "Five volunteers covered a 6 hour hackathon; one dedicated to judging logistics saved the close."
+        ]
       ]
     },
     {
       "id": "seed-founder-fireside",
       "title": "Founder Fireside: Fundraising in 2026",
-      "attrs": {"date": "2026-09-03", "attendees": 70, "format": "talk", "city": "London"},
-      "venue": ["King's Cross Library Hall", "hosted"],
+      "attrs": {
+        "date": "2026-09-03",
+        "attendees": 70,
+        "format": "talk",
+        "city": "London"
+      },
+      "venue": [
+        "King's Cross Library Hall",
+        "hosted"
+      ],
       "community": "London Founders Circle",
-      "suppliers": [["Bean There Coffee Cart", "supplied"], ["Thames Print Studio", "supplied"]],
-      "sponsors": [["Fennel Ventures", 1000]],
-      "volunteers": ["Priya Nair", "Sofia Marques", "Ben Whitaker"],
+      "suppliers": [
+        [
+          "Bean There Coffee Cart",
+          "supplied"
+        ],
+        [
+          "Thames Print Studio",
+          "supplied"
+        ]
+      ],
+      "sponsors": [
+        [
+          "Fennel Ventures",
+          1000
+        ]
+      ],
+      "volunteers": [
+        "Priya Nair",
+        "Sofia Marques",
+        "Ben Whitaker"
+      ],
       "facts": [
-        ["budget", "70 people, hall hire GBP 350, coffee GBP 196, printed programmes GBP 64 from Thames Print Studio."],
-        ["venue", "King's Cross Library Hall bans alcohol; plan a coffee-and-cake format instead."],
-        ["lesson", "Fireside talks need a roving mic; questions from the back were inaudible without one."],
-        ["budget", "Fennel Ventures paid GBP 1,000 to host the fireside and asked for the attendee count by email."]
+        [
+          "budget",
+          "70 people, hall hire GBP 350, coffee GBP 196, printed programmes GBP 64 from Thames Print Studio."
+        ],
+        [
+          "venue",
+          "King's Cross Library Hall bans alcohol; plan a coffee-and-cake format instead."
+        ],
+        [
+          "lesson",
+          "Fireside talks need a roving mic; questions from the back were inaudible without one."
+        ],
+        [
+          "budget",
+          "Fennel Ventures paid GBP 1,000 to host the fireside and asked for the attendee count by email."
+        ]
       ]
     },
     {
       "id": "seed-autumn-social",
       "title": "Autumn Community Social",
-      "attrs": {"date": "2026-10-01", "attendees": 100, "format": "social", "city": "London"},
-      "venue": ["Brixton Warehouse Taproom", "hosted"],
+      "attrs": {
+        "date": "2026-10-01",
+        "attendees": 100,
+        "format": "social",
+        "city": "London"
+      },
+      "venue": [
+        "Brixton Warehouse Taproom",
+        "hosted"
+      ],
       "community": "London AI Builders",
-      "suppliers": [["Pint Pot Drinks Co", "supplied"], ["Slice & Co Catering", "catered"]],
-      "sponsors": [["Ledgerly", 600], ["Northwind Cloud", 1500]],
-      "volunteers": ["Jamal Reid", "Hannah Cho", "Maya Kowalski", "Priya Nair"],
+      "suppliers": [
+        [
+          "Pint Pot Drinks Co",
+          "supplied"
+        ],
+        [
+          "Slice & Co Catering",
+          "catered"
+        ]
+      ],
+      "sponsors": [
+        [
+          "Ledgerly",
+          600
+        ],
+        [
+          "Northwind Cloud",
+          1500
+        ]
+      ],
+      "volunteers": [
+        "Jamal Reid",
+        "Hannah Cho",
+        "Maya Kowalski",
+        "Priya Nair"
+      ],
       "facts": [
-        ["budget", "100 guests: drinks GBP 650 (2 per head), 25 pizzas GBP 237, venue GBP 600."],
-        ["venue", "Brixton Warehouse Taproom is echoey; hire two handheld mics for any speeches."],
-        ["voice", "Social posts with a photo of last time's crowd got twice the sign-ups of text-only posts."],
-        ["lesson", "Pre-order 20% vegetarian pizza; vegetarian ran out first again."]
+        [
+          "budget",
+          "100 guests: drinks GBP 650 (2 per head), 25 pizzas GBP 237, venue GBP 600."
+        ],
+        [
+          "venue",
+          "Brixton Warehouse Taproom is echoey; hire two handheld mics for any speeches."
+        ],
+        [
+          "voice",
+          "Social posts with a photo of last time's crowd got twice the sign-ups of text-only posts."
+        ],
+        [
+          "lesson",
+          "Pre-order 20% vegetarian pizza; vegetarian ran out first again."
+        ]
       ]
+    }
+  ],
+  "volunteers": [
+    {
+      "name": "Priya Nair",
+      "email": "priya.nair@example.com",
+      "usual_role": "door/check-in",
+      "availability": "weekday evenings"
+    },
+    {
+      "name": "Tom Okafor",
+      "email": "tom.okafor@example.com",
+      "usual_role": "setup and AV",
+      "availability": "evenings, some weekends"
+    },
+    {
+      "name": "Ben Whitaker",
+      "email": "ben.whitaker@example.com",
+      "usual_role": "door/check-in",
+      "availability": "Thursdays"
+    },
+    {
+      "name": "Sofia Marques",
+      "email": "sofia.marques@example.com",
+      "usual_role": "floor host",
+      "availability": "any evening"
+    },
+    {
+      "name": "Jamal Reid",
+      "email": "jamal.reid@example.com",
+      "usual_role": "photography",
+      "availability": "weekends"
+    },
+    {
+      "name": "Maya Kowalski",
+      "email": "maya.kowalski@example.com",
+      "usual_role": "teardown",
+      "availability": "evenings"
+    },
+    {
+      "name": "Hannah Cho",
+      "email": "hannah.cho@example.com",
+      "usual_role": "bar runner",
+      "availability": "Fridays"
+    },
+    {
+      "name": "Luca Bianchi",
+      "email": "luca.bianchi@example.com",
+      "usual_role": "hackathon judging logistics",
+      "availability": "weekends"
+    },
+    {
+      "name": "Aisha Rahman",
+      "email": "aisha.rahman@example.com",
+      "usual_role": "registration desk",
+      "availability": "weekday evenings"
     }
   ]
 }

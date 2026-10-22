@@ -417,7 +417,7 @@
       if (e.event_id && model.nodes.has(e.event_id) && e.event_id !== id) events.set(e.event_id, model.nodes.get(e.event_id));
     }
     const mems = model.memories.filter(m => m.entity_id === id || (n.kind === "event" && m.event_id === id));
-    const attrs = Object.entries(n.attrs).filter(([k]) => k !== "seeded" && k !== "seed");
+    const attrs = Object.entries(n.attrs).filter(([k]) => !["seeded", "seed", "email", "consent"].includes(k));
     const link = o => `<li class="link" data-id="${esc(o.id)}"><span class="dot" style="background:${kindInfo(o.kind).color}"></span>${esc(o.name)}</li>`;
     const evName = eid => model.nodes.has(eid) ? model.nodes.get(eid).name : eid;
     document.getElementById("panel").innerHTML = `

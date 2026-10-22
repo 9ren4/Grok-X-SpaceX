@@ -60,6 +60,12 @@ TABLES: dict[str, tuple[str, str, str, dict]] = {
         "Expenses £": GBP,
         "Reimbursement": _select("None", "Pending approval", "Approved", "Paid", "Rejected"),
     }),
+    "directory": ("volunteers", "Volunteer directory", "📇", {
+        "Event": TEXT, "Email": {"email": {}}, "Usual role": TEXT, "Availability": TEXT,
+        "Events helped": {"number": {}},
+        "Source": _select("Past volunteer", "Signed up"),
+        "Signed up for": TEXT,
+    }),
     "spots": ("venues", "Spots", "📍", {
         "Event": TEXT,
         "Status": _select("Considering", "Shortlisted", "Confirmed", "Rejected"),
@@ -118,7 +124,7 @@ def ensure(n: Notion, state: dict) -> dict[str, Any]:
         db_id = existing[section].get(title)
         if not db_id:
             props = {"Name": {"title": {}}, **props}
-            if key != "money":
+            if key not in ("money", "directory"):
                 props["Money"] = {"relation": {"database_id": dbs["money"], "type": "dual_property",
                                                "dual_property": {}}}
             db_id = n.req("POST", "/databases", {
@@ -240,6 +246,8 @@ def populate(n: Notion, ws: dict, result: RunResult, visual_url: str = "", banne
             "Contact": _t(a_.get("contact", "") + (f" · {a_['notes']}" if a_.get("notes") else "")),
             "Money": _rel(mid)})
 
+    _refresh_directory(n, dbs)
+
     # Volunteers: shifts carry no money unless someone claims expenses.
     for sh in s.rota:
         _row(n, dbs["volunteers"], {
@@ -269,6 +277,38 @@ def populate(n: Notion, ws: dict, result: RunResult, visual_url: str = "", banne
 
     _money_summary(n, ws)
     log(f"workspace rows written for {ev}")
+
+
+DIRECTORY = "(directory)"
+
+
+def signup_url(event: str) -> str:
+    from urllib.parse import quote
+    return f"{config.PUBLIC_BASE_URL}/volunteer?event={quote(event)}"
+
+
+def _refresh_directory(n: Notion, dbs: dict) -> None:
+    """Everyone who has volunteered or signed up, with contact details, rebuilt from the knowledge base."""
+    try:
+        from . import memory
+        nodes = [x for x in memory.graph(limit=500).get("nodes", []) if x.get("kind") == "volunteer"]
+    except Exception as e:  # noqa: BLE001
+        log(f"volunteer directory skipped ({e})")
+        return
+    _clear(n, dbs["directory"], DIRECTORY)
+    for v in sorted(nodes, key=lambda x: -(x.get("times_used") or 0)):
+        a = v.get("attrs") or {}
+        add_directory_row(n, dbs, v["name"], a.get("email", ""), a.get("usual_role", ""), a.get("availability", ""),
+                          v.get("times_used") or 0, "Signed up" if a.get("signed_up_for") else "Past volunteer",
+                          a.get("signed_up_for", ""))
+
+
+def add_directory_row(n: Notion, dbs: dict, name: str, email: str, role: str, availability: str,
+                      helped: int, source: str, signed_up_for: str = "") -> str:
+    return _row(n, dbs["directory"], {
+        "Name": {"title": rt(name)}, "Event": _t(DIRECTORY), "Email": {"email": email or None},
+        "Usual role": _t(role), "Availability": _t(availability), "Events helped": {"number": helped},
+        "Source": _sel(source), "Signed up for": _t(signed_up_for)})
 
 
 def _past_sponsors() -> list[dict]:

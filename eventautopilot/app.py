@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import queue
+from urllib.parse import quote
 import re
 import threading
 from pathlib import Path
@@ -72,6 +73,7 @@ def _links(result) -> dict:
         "newsletter": _out_url(str(news)) if news else "",
         "ghost": result.ghost_url or find(r"\bghost: (https?://\S+)"),
         "graph": "/graph/index.html",
+        "signup": f"{config.PUBLIC_BASE_URL}/volunteer?event=" + quote(result.spec.title or ""),
     }
 
 
@@ -150,6 +152,50 @@ def draft(body: DraftIn) -> dict:
     from . import intake
     d = intake.draft_message(body.topic, intake.Brief.model_validate(body.brief or {}), body.contact)
     return {**d.model_dump(), "contact": body.contact}
+
+
+class VolunteerIn(BaseModel):
+    name: str
+    email: str
+    role: str = ""
+    availability: str = ""
+    event: str = ""
+    consent: bool = False
+
+
+@app.get("/volunteer")
+def volunteer_page() -> FileResponse:
+    return FileResponse(WEB / "volunteer.html")
+
+
+@app.post("/api/volunteer")
+def volunteer_signup(body: VolunteerIn):
+    """Public sign-up: saves to the knowledge base and the Notion volunteer directory."""
+    name, email = body.name.strip(), body.email.strip()
+    if not body.consent:
+        return JSONResponse({"error": "Please tick the box so we can store your details."}, 400)
+    if not name or not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        return JSONResponse({"error": "Please give your name and a valid email."}, 400)
+    from . import memory
+    from .models import Entity
+    attrs = {"email": email, "usual_role": body.role.strip(), "availability": body.availability.strip(),
+             "signed_up_for": body.event.strip(), "consent": True}
+    try:
+        memory.remember("", [], [Entity(kind="volunteer", name=name, attrs=attrs, times_used=0)], [])
+    except Exception as e:  # noqa: BLE001
+        return JSONResponse({"error": f"Couldn't save right now ({type(e).__name__})."}, 500)
+    if config.HAS_NOTION:
+        try:
+            from . import notion_sync, workspace
+            n = notion_sync.Notion(config.NOTION_TOKEN)
+            state = notion_sync._load_state()
+            ws = workspace.ensure(n, state)
+            notion_sync._save_state(state)
+            workspace.add_directory_row(n, ws["dbs"], name, email, attrs["usual_role"], attrs["availability"],
+                                        0, "Signed up", attrs["signed_up_for"])
+        except Exception as e:  # noqa: BLE001 — saved in the knowledge base either way
+            print(f"volunteer: notion row skipped ({e})")
+    return {"ok": True}
 
 
 @app.post("/api/run")

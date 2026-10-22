@@ -47,3 +47,5 @@ NOTION_TOKEN = _clean("NOTION_TOKEN")
 NOTION_PARENT_PAGE_ID = _clean("NOTION_PARENT_PAGE_ID")
 SUPABASE_ANON_KEY = _clean("SUPABASE_ANON_KEY")
 HAS_NOTION = bool(NOTION_TOKEN and NOTION_PARENT_PAGE_ID)
+# Where the chat app is reachable by others (ngrok or a deploy); used for the volunteer sign-up link.
+PUBLIC_BASE_URL = _clean("PUBLIC_BASE_URL", "http://localhost:8000").rstrip("/")

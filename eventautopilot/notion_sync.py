@@ -582,7 +582,8 @@ def _push_live(result: RunResult, visual_url: str, ghost_url: str, banner_url: s
     for pid in pages.get(title, []):
         n.archive_page(pid)
 
-    blocks = build_blocks(result, visual_url, ghost_url, sections=workspace.section_links(ws))
+    sections = workspace.section_links(ws) + [("🙋 Volunteer sign-up form", workspace.signup_url(title))]
+    blocks = build_blocks(result, visual_url, ghost_url, sections=sections)
     page: dict[str, Any] = {
         "parent": {"type": "page_id", "page_id": config.NOTION_PARENT_PAGE_ID},
         "properties": {"title": {"title": rt(f"{PAGE_PREFIX}{title}")}},

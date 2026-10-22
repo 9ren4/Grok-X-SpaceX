@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Volunteer Sign-up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b1310;--panel:#111c17;--panel-2:#16241e;--line:#23352c;--text:#eef3ee;--muted:#93a59a;--lime:#c8f560;--lime-ink:#14200f;--coral:#ff8a65}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font:16px/1.5 "Inter",system-ui,sans-serif;display:grid;place-items:center;padding:24px 16px;
+  background-image:radial-gradient(circle at 85% -10%,#1f3a1a 0,transparent 45%)}
+.card{width:100%;max-width:520px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:28px}
+.brand{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;font-weight:600;letter-spacing:.4px;text-transform:uppercase}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--lime)}
+h1{font:700 30px/1.1 "Space Grotesk","Inter",sans-serif;margin:14px 0 6px}
+h1 span{color:var(--lime)}
+p.lead{color:var(--muted);margin:0 0 22px}
+label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:14px 0 6px}
+input,select,textarea{width:100%;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit}
+input:focus,select:focus,textarea:focus{outline:2px solid #c8f56066;border-color:var(--lime)}
+.check{display:flex;gap:10px;align-items:flex-start;margin-top:18px;font-size:14px;color:var(--muted)}
+.check input{width:auto;margin-top:4px}
+button{margin-top:20px;width:100%;border:0;border-radius:12px;background:var(--lime);color:var(--lime-ink);font:700 16px "Inter",sans-serif;padding:14px;cursor:pointer}
+button:disabled{opacity:.6;cursor:wait}
+.msg{margin-top:14px;font-size:14px}
+.err{color:var(--coral)}
+.done{text-align:center}
+.done .big{font-size:48px}
+</style>
+</head>
+<body>
+<main class="card" id="card">
+  <div class="brand"><span class="dot"></span>Event Autopilot</div>
+  <h1>Volunteer for <span id="event">our next event</span></h1>
+  <p class="lead">Help run the night: check-in, setup, hosting, photos or packing down. Leave your details and the organisers will be in touch.</p>
+  <form id="form">
+    <label for="name">Your name</label>
+    <input id="name" name="name" required autocomplete="name">
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" required autocomplete="email">
+    <label for="role">What would you like to help with?</label>
+    <select id="role" name="role">
+      <option>Anything that's needed</option><option>Check-in / door</option><option>Setup and AV</option>
+      <option>Floor host</option><option>Photography</option><option>Food and drinks</option><option>Pack down</option>
+    </select>
+    <label for="availability">When are you free? (optional)</label>
+    <input id="availability" name="availability" placeholder="e.g. from 17:30, weekday evenings">
+    <label class="check"><input type="checkbox" id="consent" required>
+      <span>I agree to my name, email and availability being stored by the organisers so they can contact me about volunteering.</span></label>
+    <button type="submit" id="submit">Sign me up</button>
+    <div class="msg" id="msg" role="status"></div>
+  </form>
+</main>
+<script>
+const event = new URLSearchParams(location.search).get("event") || "";
+if (event) document.getElementById("event").textContent = event;
+document.getElementById("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const btn = document.getElementById("submit"), msg = document.getElementById("msg");
+  btn.disabled = true; msg.textContent = ""; msg.className = "msg";
+  const $ = id => document.getElementById(id);
+  const body = { name: $("name").value, email: $("email").value, role: $("role").value,
+                 availability: $("availability").value, event, consent: $("consent").checked };
+  try {
+    const r = await fetch("/api/volunteer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || "Something went wrong");
+    const card = document.getElementById("card");
+    card.innerHTML = "";
+    const done = document.createElement("div"); done.className = "done";
+    done.innerHTML = '<div class="big">🙌</div><h1>Thank you!</h1><p class="lead"></p>';
+    done.querySelector("p").textContent = `You're on the volunteer list${event ? " for " + event : ""}. The organisers will email you.`;
+    card.append(done);
+  } catch (err) {
+    msg.textContent = err.message; msg.className = "msg err"; btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
