@@ -124,3 +124,5 @@ class RunResult(BaseModel):
     hours_saved: float = 0.0
     log: list[str] = Field(default_factory=list)
     ghost_url: str = ""
+    hours_breakdown: dict[str, float] = Field(default_factory=dict)  # hours per artifact
+    memory_stats: dict[str, Any] = Field(default_factory=dict)

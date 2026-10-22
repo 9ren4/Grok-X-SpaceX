@@ -104,6 +104,159 @@ def flatten_doc(node: Any) -> str:
     return text
 
 
+_EMOJI = re.compile(
+    "[\U0001F000-\U0001FAFF\U00002600-\U000027BF\U0001F1E6-\U0001F1FF\U00002B00-\U00002BFF"
+    "\U0000FE0F\U0000200D\U00002190-\U000021FF\U00002300-\U000023FF]+"
+)
+_BOILER = re.compile(
+    r"^\s*(?:please\s+)?(?:come\s+and\s+)?(?:join\s+(?:us|me)(?:\s+(?:for|at|on|in))?|you(?:'|’)re\s+invited(?:\s+to)?|"
+    r"we(?:'|’)re\s+(?:excited|delighted|thrilled|happy)\s+to\s+(?:invite\s+you\s+to|announce|host))\s*"
+    r"(?:(?:a|an|the|our)\s+)?", re.I)
+_SENT_SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9\"“‘(])")
+
+
+def strip_emoji(t: str) -> str:
+    """Remove emoji and tidy the whitespace they leave behind."""
+    return re.sub(r"\s{2,}", " ", _EMOJI.sub("", t)).strip()
+
+
+def sentences(text: str) -> list[str]:
+    """Split plain text into sentences (line breaks also end a sentence)."""
+    out: list[str] = []
+    for line in text.splitlines():
+        line = re.sub(r"\s+", " ", strip_emoji(line)).strip()
+        if line:
+            out += [p.strip() for p in _SENT_SPLIT.split(line) if p.strip()]
+    return out
+
+
+def _tokens(t: str) -> set[str]:
+    return set(re.findall(r"[a-z0-9]+", t.lower()))
+
+
+def _shorten(s: str, limit: int) -> str:
+    """Cut at the last clause boundary under limit; '' if no sensible cut exists."""
+    window = s[: limit - 1]
+    cuts = [m.start() for m in re.finditer(r",\s|;\s|\s[—–-]\s|:\s", window)]
+    cuts = [c for c in cuts if c >= 50]
+    return window[: cuts[-1]].rstrip(" ,;:-–—") + "." if cuts else ""
+
+
+def derive_one_liner(description: str, title: str = "", limit: int = 140) -> str:
+    """First real sentence of the description, boilerplate/emoji stripped, <= limit chars."""
+    tt = _tokens(title)
+    cands: list[str] = []
+    for sent in sentences(description):
+        s = _BOILER.sub("", sent).strip(" -–—:•*")
+        s = re.sub(r"^[A-Z ]{3,12}:\s+", "", s)  # 'WHAT: ' style labels
+        n = len(s.split())
+        if n < 6 or re.match(r"https?://", s) or re.search(r"version below|\bbelow\)", s, re.I):
+            continue
+        if n < 12 and s[-1] not in ".!?":
+            continue  # a heading, not a sentence
+        st = _tokens(s)
+        if tt and st and len(st & tt) / len(st | tt) > 0.6:
+            continue  # restates the title
+        cands.append(s[0].upper() + s[1:])
+    weak = re.compile(r"^(and|but|so|or|this|that|these|those|it|its|we|we'd|we'll|they|there|you|then|also|if)\b", re.I)
+    if cands and len(cands[0]) <= limit:
+        return cands[0]
+    for s in cands[1:6]:
+        if len(s) <= limit and len(s.split()) >= 8 and not weak.match(s):
+            return s
+    for s in cands[:1]:
+        short = _shorten(s, limit)
+        if short:
+            return short
+    if cands:
+        w = cands[0][: limit - 1].rsplit(" ", 1)[0].rstrip(" ,;:-–—")
+        return w + "…"
+    return ""
+
+
+_AUDIENCE = [
+    (r"founders?|entrepreneurs?", "founders and entrepreneurs"),
+    (r"students?", "students"),
+    (r"developers?|engineers?|hackers?|builders?", "developers and builders"),
+    (r"designers?", "designers"),
+    (r"investors?", "investors and founders"),
+    (r"women", "women in the industry"),
+    (r"finance|banking|fintech", "finance professionals"),
+    (r"researchers?|academics?", "researchers"),
+    (r"artists?|creatives?", "creatives"),
+]
+
+
+def infer_audience(title: str, description: str) -> str:
+    """Short audience phrase: a keyword in the title, or one after 'for/welcome/aimed at'. Else ''."""
+    for pat, phrase in _AUDIENCE:
+        if re.search(rf"\b(?:{pat})\b", title, re.I):
+            return phrase
+    for pat, phrase in _AUDIENCE:
+        if re.search(rf"\b(?:for|welcomes?|calling|aimed at|designed for|open to)\b[^.\n]{{0,40}}\b(?:{pat})\b",
+                     description, re.I):
+            return phrase
+    return ""
+
+
+_FORMATS = [
+    ("hackathon", r"hackathon|build\s*night|buildathon|hack\s*house|hacker\s*house"),
+    ("workshop", r"workshop|masterclass|bootcamp|hands-on|hands on"),
+    ("talk", r"screening|panel|summit|conversation|\btalks?\b|fireside|keynote|lecture|paper reading|conference"),
+    ("social", r"drinks|comedy|social|networking|\bclub\b|party|mixer|fuckup|celebration|clubhouse"),
+    ("meetup", r"meet-?up|user group"),
+]
+
+
+def detect_format(title: str, description: str) -> str:
+    """Keyword-map the format; a title hit counts x5. Ties go to list order; default meetup."""
+    best, score = "meetup", 0
+    for fmt, pat in _FORMATS:
+        n = 5 * len(re.findall(pat, title.lower())) + len(re.findall(pat, description.lower()))
+        if n > score:
+            best, score = fmt, n
+    return best
+
+
+_NAME = r"[A-Z][\w'’.\-]+(?:\s+[A-Z][\w'’.\-]+){1,3}"
+
+
+def parse_speakers(description: str) -> list[str]:
+    """Names from an explicit 'Speakers: A, B and C' style line; [] if not confidently parseable."""
+    names: list[str] = []
+    for line in description.splitlines():
+        m = re.match(r"\s*(?:speakers?|panell?ists?|featuring|line-?up|guest speakers?)\s*:\s*(.+)$", line, re.I)
+        if not m:
+            continue
+        for part in re.split(r",|;|\band\b|&|\|", m.group(1)):
+            part = strip_emoji(part).strip(" .")
+            if re.fullmatch(_NAME, part):
+                names.append(part)
+    return list(dict.fromkeys(names))[:8]
+
+
+def _venue_from_geo(geo: dict[str, Any]) -> tuple[str, str]:
+    """(name, address) from a non-obfuscated geo_address_info. Never invents."""
+    place = (geo.get("address") or geo.get("description") or "").strip()
+    full = (geo.get("full_address") or "").strip()
+    country = (geo.get("country") or "").strip()
+    rest = full
+    name = ""
+    if place and not re.match(r"^\d", place):
+        name = place
+        if full.lower().startswith(place.lower()):
+            rest = full[len(place):].lstrip(", ")
+    elif not full:
+        rest = place
+    if not rest:
+        rest = (geo.get("short_address") or "").strip() if not name else ""
+    for tail in (country, "UK", "USA"):
+        if tail and rest.endswith(", " + tail):
+            rest = rest[: -len(tail) - 2]
+            break
+    return name, rest
+
+
 def _localise(iso: str | None, tz: ZoneInfo) -> datetime | None:
     if not iso:
         return None
@@ -136,8 +289,7 @@ def to_spec(raw: dict[str, Any]) -> EventSpec:
     geo = ev.get("geo_address_info") or {}
     venue = Venue(city=geo.get("city") or geo.get("city_state") or "")
     if geo.get("mode") not in (None, "obfuscated"):
-        venue.address = geo.get("full_address") or geo.get("address") or ""
-        venue.name = geo.get("description") or ""
+        venue.name, venue.address = _venue_from_geo(geo)
     if not venue.city:
         missing.append("venue.city")
     if not venue.name:
@@ -180,13 +332,25 @@ def to_spec(raw: dict[str, Any]) -> EventSpec:
     description = flatten_doc(raw.get("description_mirror")).strip()
     if not description:
         missing.append("description")
-    missing += ["one_liner", "audience"]
+    title = ev.get("name") or ""
+    one_liner = derive_one_liner(description, title)
+    audience = infer_audience(title, description)
+    if not one_liner:
+        missing.append("one_liner")
+    if not audience:
+        missing.append("audience")
+    fmt = detect_format(title, description)
+    speakers = parse_speakers(description)
+    if speakers:
+        raw = {**raw, "speakers": speakers}
 
     slug = ev.get("url") or ""
     return EventSpec(
         id=ev.get("api_id") or raw.get("api_id") or "",
-        title=ev.get("name") or "",
-        one_liner="",
+        title=title,
+        one_liner=one_liner,
+        audience=audience,
+        format=fmt,  # type: ignore[arg-type]
         description=description,
         date=start,
         start=start.strftime("%H:%M") if start else "",
