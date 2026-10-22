@@ -39,7 +39,13 @@ pipeline._Log = _StreamLog
 
 
 class RunIn(BaseModel):
-    message: str
+    message: str = ""
+    brief: dict | None = None
+
+
+class IntakeIn(BaseModel):
+    history: list[dict]
+    brief: dict = {}
 
 
 def _out_url(path: str) -> str:
@@ -79,6 +85,13 @@ def status() -> dict:
     return {**config.status(), "notion": config.HAS_NOTION}
 
 
+@app.post("/api/intake")
+def intake_turn(body: IntakeIn) -> dict:
+    from . import intake
+    turn = intake.step(body.history, intake.Brief.model_validate(body.brief or {}))
+    return turn.model_dump()
+
+
 @app.post("/api/run")
 def run(body: RunIn):
     if not _busy.acquire(blocking=False):
@@ -90,7 +103,10 @@ def run(body: RunIn):
     def work() -> None:
         global _sink
         try:
-            res = pipeline.run(body.message)
+            from . import intake
+            brief = intake.Brief.model_validate(body.brief) if body.brief else None
+            source = intake.to_source(brief) if brief and not body.message else body.message
+            res = pipeline.run(source, brief=brief)
             q.put({"type": "result", "result": json.loads(res.model_dump_json()), "links": _links(res)})
         except pipeline.PipelineError as e:
             q.put({"type": "error", "error": str(e)})

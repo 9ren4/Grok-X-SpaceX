@@ -42,8 +42,10 @@ main{position:relative;z-index:1}
 
 /* workspace */
 .work{display:none;grid-template-columns:minmax(320px,400px) 1fr;gap:20px;padding:20px 24px;max-width:1500px;margin:0 auto}
-body.running .hero,body.done .hero{display:none}
-body.running .work,body.done .work{display:grid}
+body.running .hero,body.done .hero,body.chatting .hero{display:none}
+body.running .work,body.done .work,body.chatting .work{display:grid}
+.msg .actions{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+.typing{color:var(--muted);font-style:italic}
 .chat{display:flex;flex-direction:column;gap:12px;position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px)}
 .thread{overflow:auto;display:flex;flex-direction:column;gap:12px;padding-right:4px}
 .msg{padding:12px 14px;border-radius:14px;max-width:100%;white-space:pre-wrap}
@@ -117,10 +119,10 @@ iframe.graph{width:100%;height:calc(100vh - 170px);min-height:520px;border:1px s
 <main>
   <section class="hero">
     <h1>One line in.<br><span>The whole event out.</span></h1>
-    <p>Tell me about your event, or paste a Luma link. I'll plan the run sheet, budget and rota from your community's past events, write the posts and newsletter, make the visual and build the Notion page for you to approve.</p>
+    <p>Tell me about your event, or paste a Luma link. I'll ask a few quick questions about the venue, food, sponsors, volunteers and posts, then plan the run sheet, budget and rota from your community's past events, write the posts and newsletter, make the visual and build the Notion page for you to approve.</p>
     <form class="composer" id="heroForm">
       <textarea id="heroInput" rows="1" placeholder="e.g. AI x Climate meetup, 14 Nov, ~60 people, pizza" autofocus></textarea>
-      <button type="submit">Plan it</button>
+      <button type="submit">Start</button>
     </form>
     <div class="chips" id="chips"></div>
   </section>
@@ -129,7 +131,7 @@ iframe.graph{width:100%;height:calc(100vh - 170px);min-height:520px;border:1px s
     <aside class="chat">
       <div class="thread" id="thread"></div>
       <form class="composer" id="chatForm">
-        <textarea id="chatInput" rows="1" placeholder="Another event, or a Luma link…"></textarea>
+        <textarea id="chatInput" rows="1" placeholder="Answer, or say skip…"></textarea>
         <button type="submit">Run</button>
       </form>
     </aside>
@@ -160,7 +162,7 @@ const EXAMPLES = [
   "Founders breakfast next Friday, 30 people, coffee and pastries",
   "Weekend hackathon for 120 students, 2 days, sponsors needed",
 ];
-for (const ex of EXAMPLES) $("#chips").append(h("button", { class: "chip", type: "button", onclick: () => start(ex) }, ex));
+for (const ex of EXAMPLES) $("#chips").append(h("button", { class: "chip", type: "button", onclick: () => send(ex) }, ex));
 
 // ---- status pills
 fetch("/api/status").then(r => r.json()).then(s => {
@@ -187,20 +189,66 @@ for (const t of document.querySelectorAll("textarea")) {
   t.addEventListener("input", () => autosize(t));
   t.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); t.form.requestSubmit(); } });
 }
-$("#heroForm").addEventListener("submit", e => { e.preventDefault(); start($("#heroInput").value); });
-$("#chatForm").addEventListener("submit", e => { e.preventDefault(); start($("#chatInput").value); });
+$("#heroForm").addEventListener("submit", e => { e.preventDefault(); send($("#heroInput").value); });
+$("#chatForm").addEventListener("submit", e => { e.preventDefault(); send($("#chatInput").value); });
 
-let running = false;
-async function start(text) {
+// ---- intake interview: Grok asks about each section before anything is planned
+let history = [], brief = {}, interviewing = false;
+function resetInterview() { history = []; brief = {}; interviewing = false; }
+async function send(text) {
   text = (text || "").trim();
   if (!text || running) return;
+  if (!interviewing) { resetInterview(); interviewing = true; }
+  if (document.body.className !== "chatting") {
+    document.body.className = "chatting";
+    $("#tabs").replaceChildren();
+    $("#panes").replaceChildren(h("div", { class: "card", style: "padding:40px;text-align:center;color:var(--muted)" },
+      "A few quick questions about the venue, food, sponsors, volunteers, budget and posts, so nothing gets made up. Say \"skip\" to any of them."));
+  }
+  $("#chatInput").value = ""; $("#heroInput").value = ""; autosize($("#chatInput"));
+  const thread = $("#thread");
+  thread.append(h("div", { class: "msg user" }, text));
+  history.push({ role: "user", content: text });
+  const wait = h("div", { class: "msg bot typing" }, "Autopilot is thinking…");
+  thread.append(wait); thread.scrollTop = thread.scrollHeight;
+  for (const b of document.querySelectorAll(".composer button")) b.disabled = true;
+  try {
+    const r = await fetch("/api/intake", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ history, brief }) });
+    const turn = await r.json();
+    wait.remove();
+    brief = turn.brief || brief;
+    history.push({ role: "assistant", content: turn.reply });
+    const msg = h("div", { class: "msg bot" }, h("div", { class: "who" }, "Autopilot"), turn.reply);
+    thread.append(msg);
+    if (turn.done) {
+      interviewing = false;
+      start("", brief);
+    } else {
+      msg.append(h("div", { class: "actions" },
+        h("button", { class: "small-btn", type: "button", onclick: e => { e.target.disabled = true; interviewing = false; start("", brief); } },
+          "Plan now with what I've told you")));
+    }
+  } catch (err) {
+    wait.remove();
+    thread.append(h("div", { class: "msg bot", style: "color:var(--coral)" }, "Couldn't reach the assistant: " + err.message));
+  } finally {
+    for (const b of document.querySelectorAll(".composer button")) b.disabled = false;
+    thread.scrollTop = thread.scrollHeight;
+  }
+}
+
+let running = false;
+async function start(text, withBrief = null) {
+  text = (text || "").trim();
+  if ((!text && !withBrief) || running) return;
   running = true;
   document.body.className = "running";
   for (const b of document.querySelectorAll(".composer button")) b.disabled = true;
   $("#chatInput").value = ""; autosize($("#chatInput"));
 
   const thread = $("#thread");
-  thread.append(h("div", { class: "msg user" }, text));
+  if (text) thread.append(h("div", { class: "msg user" }, text));
   const list = h("ul", { class: "steps" });
   const rows = {};
   for (const [id, label] of STEPS) {
@@ -227,7 +275,7 @@ async function start(text) {
   };
 
   try {
-    const res = await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text }) });
+    const res = await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text, brief: withBrief }) });
     if (!res.ok) throw new Error((await res.json()).error || res.statusText);
     const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = "";
     while (true) {
@@ -268,7 +316,8 @@ async function start(text) {
 function summary(r, links, secs) {
   const s = r.spec, st = r.memory_stats || {};
   const parts = [`Done in ${secs}s. "${s.title}" is planned and waiting for your approval in ${links.notion ? "Notion" : "the draft page"}.`];
-  if (st.rota_total) parts.push(`${st.rota_filled}/${st.rota_total} shifts and ${st.budget_from_memory}/${st.budget_total} budget lines came from your past events.`);
+  const told = s.budget.filter(i => i.source === "you told us").length;
+  if (st.rota_total) parts.push(`${st.rota_filled}/${st.rota_total} shifts filled. Budget: ${told} line${told === 1 ? "" : "s"} from your answers, ${st.budget_from_memory} from past events.`);
   if (s.missing?.length) parts.push(`I still need: ${s.missing.join(", ")}.`);
   parts.push(`That's about ${r.hours_saved} h of volunteer admin saved.`);
   return parts.join("\n\n");

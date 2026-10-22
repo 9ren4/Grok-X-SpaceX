@@ -205,9 +205,26 @@ def populate(n: Notion, ws: dict, result: RunResult, visual_url: str = "", banne
                 "Status": _sel("Estimated"), "Where the number came from": _t(item.source or "estimate"),
                 "Money": _rel(mid)})
 
-    # Sponsorship: past sponsors from the knowledge base become prospects, each with an
-    # expected-income line in Money. Nothing counts as confirmed until the lead says so.
-    for sp in _past_sponsors():
+    brief = s.raw.get("brief")
+
+    # Sponsorship: sponsors the organiser named come first (confirmed ones are committed income);
+    # past sponsors from the knowledge base follow as prospects. Nothing is confirmed unless said.
+    told = {sp.name.lower() for sp in (brief.sponsors if brief else [])}
+    for sp in (brief.sponsors if brief else []):
+        amount = float(sp.amount or 0)
+        mid = ""
+        if amount:
+            mid = _row(n, dbs["money"], {
+                "Name": name(f"Sponsorship: {sp.name}"), "Event": _t(ev), "Kind": _sel("Income"),
+                "Source": _sel("Sponsorship"), "Estimated £": {"number": amount},
+                "Committed £": {"number": amount if sp.confirmed else None},
+                "Status": _sel("Committed" if sp.confirmed else "Estimated"),
+                "Where the number came from": _t("you told us")})
+        _row(n, dbs["sponsors"], {
+            "Name": name(sp.name), "Event": _t(ev), "Stage": _sel("Confirmed" if sp.confirmed else "Negotiating"),
+            "Amount £": {"number": amount or None}, "Payment": _sel("Expected"),
+            "Contact": _t("you told us"), "Money": _rel(mid)})
+    for sp in (x for x in _past_sponsors() if x["name"].lower() not in told):
         a_ = sp.get("attrs") or {}
         amount = float(a_.get("last_paid_gbp") or a_.get("typical_gbp") or 0)
         where = f"past sponsor: backed {sp.get('times_used', 1)} events, last paid £{amount:,.0f}"
@@ -241,9 +258,12 @@ def populate(n: Notion, ws: dict, result: RunResult, visual_url: str = "", banne
                                  "Status": draft, "Format": _sel(fmt), "Image": {"url": url or None},
                                  "Content": _t("" if url else "Rendered locally; no public URL yet"),
                                  "Money": _rel(*promo)})
+    wanted = {c.lower() for c in (brief.channels if brief else [])}
     for channel, text, img in (("LinkedIn", a.linkedin, banner_url or visual_url),
                                ("WhatsApp group", a.whatsapp, visual_url),
                                ("Discord", a.whatsapp, visual_url)):
+        if wanted and not any(w in channel.lower() or channel.lower().startswith(w) for w in wanted):
+            continue  # organiser chose their channels
         _row(n, dbs["social"], {"Name": name(f"{ev} — {channel}"), "Event": _t(ev), "Status": draft,
                                 "Channel": _sel(channel), "Content": _t(text), "Image": {"url": img or None}})
 

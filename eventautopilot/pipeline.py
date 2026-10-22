@@ -476,7 +476,7 @@ def compute_memory_stats(spec: EventSpec, memories: list[Memory]) -> dict[str, A
 # ---------------------------------------------------------------- run
 
 
-def run(source: str, verbose: bool = False) -> RunResult:
+def run(source: str, verbose: bool = False, brief: Any = None) -> RunResult:
     """Run the whole flow for a Luma link/slug or a one-line description."""
     log = _Log(echo=verbose)
     source = (source or "").strip()
@@ -509,6 +509,10 @@ def run(source: str, verbose: bool = False) -> RunResult:
     else:
         spec = parse_one_liner(source)
         log.add(f"one-liner: parsed {spec.title!r}, missing={spec.missing}", since=t)
+    if brief is not None:  # the organiser's intake answers win over parsing
+        from . import intake
+        intake.apply_basics(spec, brief)
+        log.add(f"intake: applied answers for {', '.join(brief.covered) or 'nothing'}")
     _ensure_id(spec)
 
     memory = _load("memory", log)
@@ -548,6 +552,10 @@ def run(source: str, verbose: bool = False) -> RunResult:
         if planned is not None:
             spec = planned
             _ensure_id(spec)
+            if brief is not None:
+                from . import intake
+                spec.raw["brief"] = brief
+                intake.apply_plan(spec, brief)
             log.add(f"plan: {len(spec.run_sheet)} slots, {len(spec.budget)} budget lines "
                     f"({spec.budget_total:.2f} {spec.currency}), {len(spec.rota)} shifts", since=t)
         else:
