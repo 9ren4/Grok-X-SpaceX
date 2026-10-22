@@ -1,0 +1,81 @@
+{
+  "spec": {
+    "id": "evt-sample-ai-climate-london",
+    "title": "London AI x Climate Meetup",
+    "one_liner": "An evening of short talks and honest conversation on using AI to cut emissions.",
+    "description": "Builders, researchers and climate founders meet in London for three lightning talks on applied machine learning for energy, supply chains and carbon accounting, followed by open networking over food and drinks.",
+    "date": "2026-11-12T18:30:00+00:00",
+    "start": "18:30",
+    "end": "21:30",
+    "timezone": "Europe/London",
+    "venue": {
+      "name": "Campus Hub Shoreditch",
+      "address": "",
+      "city": "London",
+      "capacity": 80,
+      "contact": ""
+    },
+    "expected_attendees": 60,
+    "audience": "ML engineers, climate founders, researchers and students",
+    "format": "meetup",
+    "hosts": [
+      {"name": "Amara Okafor", "role": "Lead organiser"},
+      {"name": "Tom Reilly", "role": "Co-host"}
+    ],
+    "ticket_price": 0.0,
+    "currency": "GBP",
+    "luma_url": "https://lu.ma/ai-climate-london",
+    "cover_url": "",
+    "run_sheet": [
+      {"time": "16:30", "duration_min": 60, "item": "Venue setup, signage and AV check", "owner": "Tom Reilly"},
+      {"time": "17:45", "duration_min": 30, "item": "Volunteer briefing and catering drop-off", "owner": "Amara Okafor"},
+      {"time": "18:30", "duration_min": 30, "item": "Doors open, registration and name badges", "owner": "Door team"},
+      {"time": "19:00", "duration_min": 10, "item": "Welcome and housekeeping", "owner": "Amara Okafor"},
+      {"time": "19:10", "duration_min": 15, "item": "Lightning talk 1: Grid forecasting with ML", "owner": "Speaker 1"},
+      {"time": "19:25", "duration_min": 15, "item": "Lightning talk 2: Carbon accounting for supply chains", "owner": "Speaker 2"},
+      {"time": "19:40", "duration_min": 15, "item": "Lightning talk 3: Satellite data for methane detection", "owner": "Speaker 3"},
+      {"time": "19:55", "duration_min": 20, "item": "Panel Q&A", "owner": "Tom Reilly"},
+      {"time": "20:15", "duration_min": 60, "item": "Food, drinks and networking", "owner": "All"},
+      {"time": "21:15", "duration_min": 15, "item": "Wrap-up, feedback form and pack down", "owner": "Amara Okafor"}
+    ],
+    "budget": [
+      {"label": "Venue hire", "qty": 1, "unit_cost": 350.0, "currency": "GBP", "note": "Evening hire, 5 hours incl. setup", "source": "memory: AI Builders Night (Oct)"},
+      {"label": "Catering (finger food)", "qty": 60, "unit_cost": 9.5, "currency": "GBP", "note": "Per head, vegetarian-led menu", "source": "memory: AI Builders Night (Oct)"},
+      {"label": "Drinks", "qty": 60, "unit_cost": 4.0, "currency": "GBP", "note": "Two drinks per head, soft drinks included", "source": "memory: Climate Tech Social (Sep)"},
+      {"label": "AV and projector", "qty": 1, "unit_cost": 120.0, "currency": "GBP", "note": "Mic, projector, clicker", "source": "default estimate"},
+      {"label": "Printing and badges", "qty": 60, "unit_cost": 0.6, "currency": "GBP", "note": "Badges and signage", "source": "default estimate"},
+      {"label": "Contingency", "qty": 1, "unit_cost": 100.0, "currency": "GBP", "note": "About 8 percent buffer", "source": "default estimate"}
+    ],
+    "rota": [
+      {"role": "Setup lead", "volunteer": "Tom Reilly", "start": "16:30", "end": "18:30"},
+      {"role": "Door and registration", "volunteer": "Priya Shah", "start": "18:15", "end": "19:30"},
+      {"role": "Door and registration", "volunteer": "Jonas Weber", "start": "18:15", "end": "19:30"},
+      {"role": "Photographer", "volunteer": "Priya Shah", "start": "19:00", "end": "20:30"},
+      {"role": "Catering liaison", "volunteer": "Mei Lin", "start": "17:45", "end": "21:00"},
+      {"role": "Pack down", "volunteer": "Jonas Weber", "start": "21:15", "end": "22:00"}
+    ],
+    "missing": ["venue.address"]
+  },
+  "artifacts": {
+    "page_copy": "# London AI x Climate Meetup\n\nThree lightning talks, one panel, and a room full of people who want AI to do something useful for the planet.\n\n**When:** Thursday 12 November, 18:30 to 21:30\n**Where:** Campus Hub Shoreditch, London\n\nExpect short, practical talks on grid forecasting, supply chain carbon accounting and satellite methane detection, then food, drinks and plenty of time to talk. Free to attend, limited to 60 people.",
+    "newsletter_subject": "London AI x Climate: 12 Nov, free, 60 spots",
+    "newsletter_html": "<h1>London AI x Climate Meetup</h1><p>Join us on <strong>Thursday 12 November</strong> at Campus Hub Shoreditch for three lightning talks and a panel on applied AI for climate.</p><ul><li>Grid forecasting with ML</li><li>Carbon accounting for supply chains</li><li>Satellite data for methane detection</li></ul><p>Food and drinks provided. Free, 60 spots.</p><p><a href=\"https://lu.ma/ai-climate-london\">Reserve your place</a></p>",
+    "linkedin": "We are hosting London AI x Climate on 12 November: three lightning talks, a panel, and good food in Shoreditch. If you build with ML or run a climate startup, come and swap notes. Free, 60 spots. Link in comments.",
+    "whatsapp": "Hey all! London AI x Climate meetup is on Thu 12 Nov, 18:30 at Campus Hub Shoreditch. 3 lightning talks + food and drinks, free. Grab a spot: https://lu.ma/ai-climate-london"
+  },
+  "memories_used": [
+    {"kind": "venue", "text": "Campus Hub Shoreditch hosted 55 people comfortably; evening hire was 350 GBP and AV was on site.", "tags": ["venue", "london", "meetup"], "provenance": "AI Builders Night (Oct)", "score": 0.91},
+    {"kind": "budget", "text": "Vegetarian-led finger food ran about 9.50 GBP per head and nothing was left over.", "tags": ["catering", "budget"], "provenance": "AI Builders Night (Oct)", "score": 0.87},
+    {"kind": "lesson", "text": "Two drinks per head was enough; start registration 30 minutes before talks to avoid a queue.", "tags": ["drinks", "door"], "provenance": "Climate Tech Social (Sep)", "score": 0.78}
+  ],
+  "learned": 7,
+  "hours_saved": 6.4,
+  "log": [
+    "luma: fetched event evt-sample-ai-climate-london (cache miss)",
+    "memory: recalled 3 relevant facts from 2 past events",
+    "planner: built 10-slot run sheet, 6 budget lines, 6 shifts",
+    "copy: generated page, newsletter, LinkedIn and WhatsApp drafts",
+    "memory: stored 7 new facts"
+  ],
+  "ghost_url": ""
+}

@@ -1,0 +1,990 @@
+{
+ "entities": [
+  {
+   "kind": "community",
+   "name": "London AI Builders",
+   "attrs": {
+    "city": "London",
+    "members": 1400,
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "community",
+   "name": "Hack London",
+   "attrs": {
+    "city": "London",
+    "members": 900,
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "community",
+   "name": "London Founders Circle",
+   "attrs": {
+    "city": "London",
+    "members": 650,
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "event",
+   "name": "London AI Builders Meetup #12",
+   "attrs": {
+    "date": "2026-03-12",
+    "attendees": 60,
+    "format": "meetup",
+    "city": "London",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "event",
+   "name": "Hack the Thames Weekend",
+   "attrs": {
+    "date": "2026-05-16",
+    "attendees": 120,
+    "format": "hackathon",
+    "city": "London",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "event",
+   "name": "Founders & Flat Whites Breakfast",
+   "attrs": {
+    "date": "2026-06-25",
+    "attendees": 35,
+    "format": "social",
+    "city": "London",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "event",
+   "name": "Data After Dark Social",
+   "attrs": {
+    "date": "2026-08-06",
+    "attendees": 80,
+    "format": "social",
+    "city": "London",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "event",
+   "name": "Prompt Engineering Workshop Night",
+   "attrs": {
+    "date": "2026-09-17",
+    "attendees": 45,
+    "format": "workshop",
+    "city": "London",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "venue",
+   "name": "The Shoreditch Loft",
+   "attrs": {
+    "capacity": 80,
+    "city": "London",
+    "area": "Shoreditch",
+    "hire_cost_gbp": 450,
+    "contact": "events@shoreditchloft.example",
+    "quirks": "no lift, 3rd floor; hard 22:00 curfew",
+    "seed": true
+   },
+   "times_used": 2
+  },
+  {
+   "kind": "venue",
+   "name": "Canary Wharf Tech Hub",
+   "attrs": {
+    "capacity": 200,
+    "city": "London",
+    "area": "Canary Wharf",
+    "hire_cost_gbp": 0,
+    "contact": "community@cwtechhub.example",
+    "quirks": "free for communities, security desk needs guest list 48h ahead",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "venue",
+   "name": "Clerkenwell Coworking Studio",
+   "attrs": {
+    "capacity": 45,
+    "city": "London",
+    "area": "Clerkenwell",
+    "hire_cost_gbp": 280,
+    "contact": "hello@clerkenwellstudio.example",
+    "quirks": "no kitchen, bring-your-own catering only",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "venue",
+   "name": "King's Cross Library Hall",
+   "attrs": {
+    "capacity": 70,
+    "city": "London",
+    "area": "King's Cross",
+    "hire_cost_gbp": 350,
+    "contact": "bookings@kxhall.example",
+    "quirks": "no alcohol allowed, projector needs HDMI-C adapter",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "venue",
+   "name": "Brixton Warehouse Taproom",
+   "attrs": {
+    "capacity": 120,
+    "city": "London",
+    "area": "Brixton",
+    "hire_cost_gbp": 600,
+    "contact": "events@brixtontaproom.example",
+    "quirks": "echoey, needs handheld mics",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "venue",
+   "name": "Old Street Basement Bar",
+   "attrs": {
+    "capacity": 60,
+    "city": "London",
+    "area": "Old Street",
+    "hire_cost_gbp": 0,
+    "contact": "manager@osbasement.example",
+    "quirks": "free with 500 pounds minimum bar spend, no AV",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "venue",
+   "name": "Southbank Innovation Centre",
+   "attrs": {
+    "capacity": 150,
+    "city": "London",
+    "area": "Southbank",
+    "hire_cost_gbp": 900,
+    "contact": "venues@sbinnovation.example",
+    "quirks": "step-free, wifi excellent, load-in via side door only",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "supplier",
+   "name": "Slice & Co Catering",
+   "attrs": {
+    "category": "pizza",
+    "price_per_pizza_gbp": 9.5,
+    "contact": "orders@sliceandco.example",
+    "lead_time_days": 5,
+    "seed": true
+   },
+   "times_used": 2
+  },
+  {
+   "kind": "supplier",
+   "name": "Crumbs Vegan Catering",
+   "attrs": {
+    "category": "vegan catering",
+    "price_per_head_gbp": 11.0,
+    "contact": "hi@crumbsvegan.example",
+    "lead_time_days": 7,
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "supplier",
+   "name": "Bean There Coffee Cart",
+   "attrs": {
+    "category": "coffee",
+    "price_per_head_gbp": 2.8,
+    "contact": "cart@beanthere.example",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "supplier",
+   "name": "Thames Print Studio",
+   "attrs": {
+    "category": "print",
+    "contact": "jobs@thamesprint.example",
+    "lead_time_days": 3,
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "supplier",
+   "name": "Lumen AV Hire",
+   "attrs": {
+    "category": "AV",
+    "day_rate_gbp": 320,
+    "contact": "book@lumenav.example",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "supplier",
+   "name": "Pint Pot Drinks Co",
+   "attrs": {
+    "category": "drinks",
+    "price_per_head_gbp": 6.5,
+    "contact": "orders@pintpot.example",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "sponsor",
+   "name": "Northwind Cloud",
+   "attrs": {
+    "tier": "gold",
+    "typical_gbp": 1500,
+    "contact": "community@northwind.example",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "sponsor",
+   "name": "Fennel Ventures",
+   "attrs": {
+    "tier": "silver",
+    "typical_gbp": 800,
+    "contact": "partners@fennel.example",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "sponsor",
+   "name": "Quill Analytics",
+   "attrs": {
+    "tier": "in-kind",
+    "typical_gbp": 0,
+    "notes": "gives swag and a speaker",
+    "contact": "devrel@quill.example",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "sponsor",
+   "name": "Ledgerly",
+   "attrs": {
+    "tier": "silver",
+    "typical_gbp": 600,
+    "contact": "hello@ledgerly.example",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "volunteer",
+   "name": "Priya Nair",
+   "attrs": {
+    "usual_role": "door/check-in",
+    "city": "London",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "volunteer",
+   "name": "Tom Okafor",
+   "attrs": {
+    "usual_role": "setup",
+    "city": "London",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "volunteer",
+   "name": "Sofia Marques",
+   "attrs": {
+    "usual_role": "AV/tech",
+    "city": "London",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "volunteer",
+   "name": "Jamal Reid",
+   "attrs": {
+    "usual_role": "photography",
+    "city": "London",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "volunteer",
+   "name": "Hannah Cho",
+   "attrs": {
+    "usual_role": "bar runner",
+    "city": "London",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "volunteer",
+   "name": "Luca Bianchi",
+   "attrs": {
+    "usual_role": "greeter",
+    "city": "London",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "volunteer",
+   "name": "Aisha Rahman",
+   "attrs": {
+    "usual_role": "setup",
+    "city": "London",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "volunteer",
+   "name": "Ben Whitaker",
+   "attrs": {
+    "usual_role": "door/check-in",
+    "city": "London",
+    "seed": true
+   },
+   "times_used": 1
+  },
+  {
+   "kind": "volunteer",
+   "name": "Maya Kowalski",
+   "attrs": {
+    "usual_role": "teardown",
+    "city": "London",
+    "seed": true
+   },
+   "times_used": 1
+  }
+ ],
+ "relations": [
+  {
+   "source": "community:London AI Builders",
+   "relation": "organised",
+   "target": "event:London AI Builders Meetup #12"
+  },
+  {
+   "source": "community:Hack London",
+   "relation": "organised",
+   "target": "event:Hack the Thames Weekend"
+  },
+  {
+   "source": "community:London Founders Circle",
+   "relation": "organised",
+   "target": "event:Founders & Flat Whites Breakfast"
+  },
+  {
+   "source": "community:London Founders Circle",
+   "relation": "organised",
+   "target": "event:Data After Dark Social"
+  },
+  {
+   "source": "community:London AI Builders",
+   "relation": "organised",
+   "target": "event:Prompt Engineering Workshop Night"
+  },
+  {
+   "source": "venue:The Shoreditch Loft",
+   "relation": "hosted",
+   "target": "event:London AI Builders Meetup #12"
+  },
+  {
+   "source": "venue:Canary Wharf Tech Hub",
+   "relation": "hosted",
+   "target": "event:Hack the Thames Weekend"
+  },
+  {
+   "source": "venue:Clerkenwell Coworking Studio",
+   "relation": "hosted",
+   "target": "event:Founders & Flat Whites Breakfast"
+  },
+  {
+   "source": "venue:Brixton Warehouse Taproom",
+   "relation": "hosted",
+   "target": "event:Data After Dark Social"
+  },
+  {
+   "source": "venue:King's Cross Library Hall",
+   "relation": "hosted",
+   "target": "event:Prompt Engineering Workshop Night"
+  },
+  {
+   "source": "venue:The Shoreditch Loft",
+   "relation": "hosted",
+   "target": "event:Data After Dark Social"
+  },
+  {
+   "source": "supplier:Slice & Co Catering",
+   "relation": "catered",
+   "target": "event:London AI Builders Meetup #12"
+  },
+  {
+   "source": "supplier:Bean There Coffee Cart",
+   "relation": "catered",
+   "target": "event:London AI Builders Meetup #12"
+  },
+  {
+   "source": "supplier:Slice & Co Catering",
+   "relation": "catered",
+   "target": "event:Hack the Thames Weekend"
+  },
+  {
+   "source": "supplier:Pint Pot Drinks Co",
+   "relation": "catered",
+   "target": "event:Hack the Thames Weekend"
+  },
+  {
+   "source": "supplier:Crumbs Vegan Catering",
+   "relation": "catered",
+   "target": "event:Founders & Flat Whites Breakfast"
+  },
+  {
+   "source": "supplier:Bean There Coffee Cart",
+   "relation": "catered",
+   "target": "event:Founders & Flat Whites Breakfast"
+  },
+  {
+   "source": "supplier:Pint Pot Drinks Co",
+   "relation": "catered",
+   "target": "event:Data After Dark Social"
+  },
+  {
+   "source": "supplier:Slice & Co Catering",
+   "relation": "catered",
+   "target": "event:Prompt Engineering Workshop Night"
+  },
+  {
+   "source": "supplier:Lumen AV Hire",
+   "relation": "supplied",
+   "target": "event:Hack the Thames Weekend"
+  },
+  {
+   "source": "supplier:Lumen AV Hire",
+   "relation": "supplied",
+   "target": "event:Data After Dark Social"
+  },
+  {
+   "source": "supplier:Thames Print Studio",
+   "relation": "supplied",
+   "target": "event:London AI Builders Meetup #12"
+  },
+  {
+   "source": "sponsor:Northwind Cloud",
+   "relation": "sponsored",
+   "target": "event:London AI Builders Meetup #12"
+  },
+  {
+   "source": "sponsor:Northwind Cloud",
+   "relation": "sponsored",
+   "target": "event:Hack the Thames Weekend"
+  },
+  {
+   "source": "sponsor:Fennel Ventures",
+   "relation": "sponsored",
+   "target": "event:Hack the Thames Weekend"
+  },
+  {
+   "source": "sponsor:Quill Analytics",
+   "relation": "sponsored",
+   "target": "event:Prompt Engineering Workshop Night"
+  },
+  {
+   "source": "sponsor:Ledgerly",
+   "relation": "sponsored",
+   "target": "event:Founders & Flat Whites Breakfast"
+  },
+  {
+   "source": "sponsor:Fennel Ventures",
+   "relation": "sponsored",
+   "target": "event:Data After Dark Social"
+  },
+  {
+   "source": "sponsor:Northwind Cloud",
+   "relation": "sponsored",
+   "target": "venue:Canary Wharf Tech Hub"
+  },
+  {
+   "source": "volunteer:Priya Nair",
+   "relation": "ran_shift",
+   "target": "event:London AI Builders Meetup #12"
+  },
+  {
+   "source": "volunteer:Tom Okafor",
+   "relation": "ran_shift",
+   "target": "event:London AI Builders Meetup #12"
+  },
+  {
+   "source": "volunteer:Sofia Marques",
+   "relation": "ran_shift",
+   "target": "event:London AI Builders Meetup #12"
+  },
+  {
+   "source": "volunteer:Jamal Reid",
+   "relation": "ran_shift",
+   "target": "event:Hack the Thames Weekend"
+  },
+  {
+   "source": "volunteer:Hannah Cho",
+   "relation": "ran_shift",
+   "target": "event:Hack the Thames Weekend"
+  },
+  {
+   "source": "volunteer:Luca Bianchi",
+   "relation": "ran_shift",
+   "target": "event:Hack the Thames Weekend"
+  },
+  {
+   "source": "volunteer:Priya Nair",
+   "relation": "ran_shift",
+   "target": "event:Hack the Thames Weekend"
+  },
+  {
+   "source": "volunteer:Aisha Rahman",
+   "relation": "ran_shift",
+   "target": "event:Founders & Flat Whites Breakfast"
+  },
+  {
+   "source": "volunteer:Ben Whitaker",
+   "relation": "ran_shift",
+   "target": "event:Data After Dark Social"
+  },
+  {
+   "source": "volunteer:Maya Kowalski",
+   "relation": "ran_shift",
+   "target": "event:Data After Dark Social"
+  },
+  {
+   "source": "volunteer:Tom Okafor",
+   "relation": "ran_shift",
+   "target": "event:Prompt Engineering Workshop Night"
+  },
+  {
+   "source": "volunteer:Sofia Marques",
+   "relation": "ran_shift",
+   "target": "event:Prompt Engineering Workshop Night"
+  },
+  {
+   "source": "volunteer:Priya Nair",
+   "relation": "ran_shift",
+   "target": "event:Prompt Engineering Workshop Night"
+  },
+  {
+   "source": "community:Hack London",
+   "relation": "partnered_with",
+   "target": "community:London AI Builders"
+  },
+  {
+   "source": "supplier:Slice & Co Catering",
+   "relation": "supplied",
+   "target": "venue:The Shoreditch Loft"
+  }
+ ],
+ "memories": [
+  {
+   "kind": "budget",
+   "text": "60 people ate 15 pizzas, GBP 142 from Slice & Co Catering (about 4 people per pizza, 9.50 per pizza plus delivery). Order 15 for 60 and almost nothing was left.",
+   "tags": [
+    "pizza",
+    "food",
+    "catering",
+    "per-head",
+    "quantity"
+   ],
+   "provenance": "London AI Builders Meetup #12",
+   "entity": "supplier:Slice & Co Catering"
+  },
+  {
+   "kind": "budget",
+   "text": "Food cost came to about GBP 2.37 per head at the AI Builders meetup (pizza only). Adding coffee brought it to GBP 3.90 per head.",
+   "tags": [
+    "cost-per-head",
+    "food",
+    "meetup"
+   ],
+   "provenance": "London AI Builders Meetup #12",
+   "entity": null
+  },
+  {
+   "kind": "budget",
+   "text": "Bean There Coffee Cart charged GBP 2.80 per head for unlimited filter and tea at a 60 person evening meetup; about 70% of people took one.",
+   "tags": [
+    "coffee",
+    "drinks",
+    "per-head"
+   ],
+   "provenance": "London AI Builders Meetup #12",
+   "entity": "supplier:Bean There Coffee Cart"
+  },
+  {
+   "kind": "budget",
+   "text": "Always order 20% vegetarian and 10% vegan pizzas: 3 of 15 were vegetarian and all gone first.",
+   "tags": [
+    "pizza",
+    "dietary",
+    "vegetarian",
+    "vegan",
+    "food"
+   ],
+   "provenance": "London AI Builders Meetup #12",
+   "entity": "supplier:Slice & Co Catering"
+  },
+  {
+   "kind": "budget",
+   "text": "120 hackathon attendees got 34 pizzas on Saturday night (GBP 323 from Slice & Co) plus breakfast pastries; roughly 3.5 people per pizza when people stay for hours.",
+   "tags": [
+    "pizza",
+    "food",
+    "hackathon",
+    "quantity"
+   ],
+   "provenance": "Hack the Thames Weekend",
+   "entity": "supplier:Slice & Co Catering"
+  },
+  {
+   "kind": "budget",
+   "text": "Total spend for the 2 day hackathon was GBP 2,840 (GBP 23.70 per head), covered by Northwind Cloud GBP 1,500 and Fennel Ventures GBP 800.",
+   "tags": [
+    "cost-per-head",
+    "hackathon",
+    "budget",
+    "sponsor"
+   ],
+   "provenance": "Hack the Thames Weekend",
+   "entity": null
+  },
+  {
+   "kind": "budget",
+   "text": "Crumbs Vegan Catering charged GBP 11 per head for a 35 person breakfast; minimum order 30 people and 7 days notice.",
+   "tags": [
+    "vegan",
+    "catering",
+    "breakfast",
+    "per-head"
+   ],
+   "provenance": "Founders & Flat Whites Breakfast",
+   "entity": "supplier:Crumbs Vegan Catering"
+  },
+  {
+   "kind": "budget",
+   "text": "Drinks at the social cost GBP 6.50 per head via Pint Pot Drinks Co; expect 2.2 drinks per person across a 3 hour evening.",
+   "tags": [
+    "drinks",
+    "bar",
+    "per-head",
+    "social"
+   ],
+   "provenance": "Data After Dark Social",
+   "entity": "supplier:Pint Pot Drinks Co"
+  },
+  {
+   "kind": "budget",
+   "text": "A typical 60 person London evening meetup lands at GBP 6 to 9 per head all-in (food, drinks, print, AV) when the venue is free or cheap.",
+   "tags": [
+    "cost-per-head",
+    "meetup",
+    "budget"
+   ],
+   "provenance": "London AI Builders Meetup #12",
+   "entity": null
+  },
+  {
+   "kind": "budget",
+   "text": "Lumen AV Hire day rate is GBP 320 for a PA, two handheld mics and a lectern mic; book 10 days ahead.",
+   "tags": [
+    "av",
+    "mics",
+    "hire",
+    "budget"
+   ],
+   "provenance": "Hack the Thames Weekend",
+   "entity": "supplier:Lumen AV Hire"
+  },
+  {
+   "kind": "budget",
+   "text": "Print for 60 attendees (badges, signage, 2 banners) cost GBP 64 from Thames Print Studio; 3 day turnaround.",
+   "tags": [
+    "print",
+    "badges",
+    "signage"
+   ],
+   "provenance": "London AI Builders Meetup #12",
+   "entity": "supplier:Thames Print Studio"
+  },
+  {
+   "kind": "venue",
+   "text": "The Shoreditch Loft is on the 3rd floor with no lift: tell guests, and plan two volunteers to help carry catering up. Hard curfew at 22:00.",
+   "tags": [
+    "venue",
+    "accessibility",
+    "curfew",
+    "shoreditch"
+   ],
+   "provenance": "London AI Builders Meetup #12",
+   "entity": "venue:The Shoreditch Loft"
+  },
+  {
+   "kind": "venue",
+   "text": "The Shoreditch Loft held 60 people comfortably standing but felt full at 75; the fire limit is 80.",
+   "tags": [
+    "venue",
+    "capacity",
+    "shoreditch"
+   ],
+   "provenance": "Data After Dark Social",
+   "entity": "venue:The Shoreditch Loft"
+  },
+  {
+   "kind": "venue",
+   "text": "Canary Wharf Tech Hub is free for communities but security needs the final guest list 48 hours ahead; walk-ins are turned away.",
+   "tags": [
+    "venue",
+    "free",
+    "security",
+    "guest-list",
+    "canary wharf"
+   ],
+   "provenance": "Hack the Thames Weekend",
+   "entity": "venue:Canary Wharf Tech Hub"
+  },
+  {
+   "kind": "venue",
+   "text": "Clerkenwell Coworking Studio has no kitchen, so catering must arrive ready to serve; bins are limited to two, bring extra bags.",
+   "tags": [
+    "venue",
+    "kitchen",
+    "catering",
+    "clerkenwell"
+   ],
+   "provenance": "Founders & Flat Whites Breakfast",
+   "entity": "venue:Clerkenwell Coworking Studio"
+  },
+  {
+   "kind": "venue",
+   "text": "King's Cross Library Hall bans alcohol; the projector needs an HDMI-C adapter. Doors open 17:30, good for workshops.",
+   "tags": [
+    "venue",
+    "alcohol",
+    "projector",
+    "workshop",
+    "king's cross"
+   ],
+   "provenance": "Prompt Engineering Workshop Night",
+   "entity": "venue:King's Cross Library Hall"
+  },
+  {
+   "kind": "venue",
+   "text": "Brixton Warehouse Taproom is echoey: hire handheld mics or talks are unintelligible past row 4.",
+   "tags": [
+    "venue",
+    "av",
+    "acoustics",
+    "brixton"
+   ],
+   "provenance": "Data After Dark Social",
+   "entity": "venue:Brixton Warehouse Taproom"
+  },
+  {
+   "kind": "venue",
+   "text": "Old Street Basement Bar is free with a GBP 500 minimum bar spend; no AV, so bring your own screen and speaker.",
+   "tags": [
+    "venue",
+    "minimum spend",
+    "bar",
+    "old street"
+   ],
+   "provenance": "Data After Dark Social",
+   "entity": "venue:Old Street Basement Bar"
+  },
+  {
+   "kind": "venue",
+   "text": "Southbank Innovation Centre has excellent wifi and step-free access, but load-in is by side door only; GBP 900 hire.",
+   "tags": [
+    "venue",
+    "wifi",
+    "accessibility",
+    "southbank"
+   ],
+   "provenance": "Hack the Thames Weekend",
+   "entity": "venue:Southbank Innovation Centre"
+  },
+  {
+   "kind": "lesson",
+   "text": "Talks overran by 25 minutes at the AI Builders meetup because Q&A had no timekeeper. Assign a volunteer to hold a time card and cut Q&A hard.",
+   "tags": [
+    "run-sheet",
+    "overrun",
+    "talks",
+    "q&a",
+    "timing"
+   ],
+   "provenance": "London AI Builders Meetup #12",
+   "entity": null
+  },
+  {
+   "kind": "lesson",
+   "text": "Doors-to-first-talk gap of 30 minutes was right: 70% arrived in the last 10 minutes, so do not start on time at doors.",
+   "tags": [
+    "run-sheet",
+    "timing",
+    "doors",
+    "meetup"
+   ],
+   "provenance": "London AI Builders Meetup #12",
+   "entity": null
+  },
+  {
+   "kind": "lesson",
+   "text": "Hackathon demos ran 40 minutes over because teams had 5 minutes instead of 3. Cap demos at 3 minutes with a visible timer.",
+   "tags": [
+    "run-sheet",
+    "overrun",
+    "demos",
+    "hackathon",
+    "timing"
+   ],
+   "provenance": "Hack the Thames Weekend",
+   "entity": null
+  },
+  {
+   "kind": "lesson",
+   "text": "Roughly 35% of RSVPs did not turn up at the free breakfast; for free events plan food for 65% of RSVPs, for GBP 5+ tickets for 85%.",
+   "tags": [
+    "no-show",
+    "rsvp",
+    "attendance",
+    "food"
+   ],
+   "provenance": "Founders & Flat Whites Breakfast",
+   "entity": null
+  },
+  {
+   "kind": "lesson",
+   "text": "Free-ticket meetups in London see about 40% no-shows when the event is on a Thursday; waitlist 20% over capacity.",
+   "tags": [
+    "no-show",
+    "rsvp",
+    "attendance",
+    "waitlist",
+    "meetup"
+   ],
+   "provenance": "London AI Builders Meetup #12",
+   "entity": null
+  },
+  {
+   "kind": "lesson",
+   "text": "Sponsors respond best to a one page deck with last event's attendance and cost-per-head; Northwind Cloud replied within 2 days.",
+   "tags": [
+    "sponsor",
+    "outreach",
+    "deck"
+   ],
+   "provenance": "Hack the Thames Weekend",
+   "entity": "sponsor:Northwind Cloud"
+  },
+  {
+   "kind": "lesson",
+   "text": "Quill Analytics pays in kind (swag, one speaker) rather than cash; ask by email 3 weeks out.",
+   "tags": [
+    "sponsor",
+    "in-kind",
+    "swag",
+    "speaker"
+   ],
+   "provenance": "Prompt Engineering Workshop Night",
+   "entity": "sponsor:Quill Analytics"
+  },
+  {
+   "kind": "volunteer",
+   "text": "Priya Nair is the most reliable door/check-in lead and has run shifts at three events; ask her first for a 60+ person event.",
+   "tags": [
+    "volunteer",
+    "check-in",
+    "rota"
+   ],
+   "provenance": "Prompt Engineering Workshop Night",
+   "entity": "volunteer:Priya Nair"
+  },
+  {
+   "kind": "volunteer",
+   "text": "Plan one volunteer per 20 attendees: 60 people needed 3 (door, greeter, AV/floor), 120 people needed 6 including a bar runner.",
+   "tags": [
+    "volunteer",
+    "rota",
+    "staffing",
+    "ratio"
+   ],
+   "provenance": "Hack the Thames Weekend",
+   "entity": null
+  },
+  {
+   "kind": "voice",
+   "text": "Organisers edited AI Builders copy to drop hype: prefers 'come build with us' to 'revolutionary', no emojis in headlines, always mention food is provided.",
+   "tags": [
+    "voice",
+    "tone",
+    "copy",
+    "linkedin"
+   ],
+   "provenance": "London AI Builders Meetup #12",
+   "entity": "community:London AI Builders"
+  },
+  {
+   "kind": "voice",
+   "text": "Founders Circle posts are warm and understated: first names, short sentences, ends with 'Bring a friend who is building something.' No hashtags.",
+   "tags": [
+    "voice",
+    "tone",
+    "copy",
+    "newsletter"
+   ],
+   "provenance": "Founders & Flat Whites Breakfast",
+   "entity": "community:London Founders Circle"
+  },
+  {
+   "kind": "voice",
+   "text": "Hack London WhatsApp messages are punchy, lowercase-friendly, include the one-line address and 'doors 6pm sharp' in the first line.",
+   "tags": [
+    "voice",
+    "whatsapp",
+    "copy"
+   ],
+   "provenance": "Hack the Thames Weekend",
+   "entity": "community:Hack London"
+  }
+ ]
+}
