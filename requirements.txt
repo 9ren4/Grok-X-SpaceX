@@ -4,9 +4,12 @@ pydantic>=2.7
 python-dotenv>=1.0
 PyJWT>=2.8
 
-# API server (optional: `python -m eventautopilot.api`)
+# Chat front page: `python -m eventautopilot.app`
 fastapi>=0.110
 uvicorn>=0.29
+
+# Visuals: HTML template -> PNG. Also run once: `playwright install chromium`
+playwright>=1.44
 
 # Memory layer (optional: falls back to the local JSON store if absent)
 # cognee>=0.1.20
