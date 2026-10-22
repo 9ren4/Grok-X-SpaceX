@@ -205,6 +205,24 @@ def populate(n: Notion, ws: dict, result: RunResult, visual_url: str = "", banne
                 "Status": _sel("Estimated"), "Where the number came from": _t(item.source or "estimate"),
                 "Money": _rel(mid)})
 
+    # Sponsorship: past sponsors from the knowledge base become prospects, each with an
+    # expected-income line in Money. Nothing counts as confirmed until the lead says so.
+    for sp in _past_sponsors():
+        a_ = sp.get("attrs") or {}
+        amount = float(a_.get("last_paid_gbp") or a_.get("typical_gbp") or 0)
+        where = f"past sponsor: backed {sp.get('times_used', 1)} events, last paid £{amount:,.0f}"
+        mid = ""
+        if amount:
+            mid = _row(n, dbs["money"], {
+                "Name": name(f"Sponsorship: {sp['name']}"), "Event": _t(ev), "Kind": _sel("Income"),
+                "Source": _sel("Sponsorship"), "Estimated £": {"number": amount}, "Status": _sel("Estimated"),
+                "Where the number came from": _t(where)})
+        _row(n, dbs["sponsors"], {
+            "Name": name(sp["name"]), "Event": _t(ev), "Stage": _sel("Prospect"),
+            "Amount £": {"number": amount}, "Payment": _sel("Expected"),
+            "Contact": _t(a_.get("contact", "") + (f" · {a_['notes']}" if a_.get("notes") else "")),
+            "Money": _rel(mid)})
+
     # Volunteers: shifts carry no money unless someone claims expenses.
     for sh in s.rota:
         _row(n, dbs["volunteers"], {
@@ -233,6 +251,17 @@ def populate(n: Notion, ws: dict, result: RunResult, visual_url: str = "", banne
     log(f"workspace rows written for {ev}")
 
 
+def _past_sponsors() -> list[dict]:
+    try:
+        from . import memory
+        nodes = memory.graph(limit=500).get("nodes", [])
+    except Exception as e:  # noqa: BLE001 — sponsors are a bonus, never block the push
+        log(f"sponsor lookup skipped ({e})")
+        return []
+    return sorted((x for x in nodes if x.get("kind") == "sponsor"),
+                  key=lambda x: -(x.get("times_used") or 0))
+
+
 def _money_summary(n: Notion, ws: dict) -> None:
     """Callout at the top of the Money page: projected spend by source, across all events."""
     totals: dict[str, float] = {}
@@ -252,9 +281,11 @@ def _money_summary(n: Notion, ws: dict) -> None:
             cursor = res.get("next_cursor") or ""
             if not res.get("has_more"):
                 break
-        spend = sum(v for k, v in totals.items() if k != "Sponsorship")
+        income = totals.pop("Sponsorship", 0)
+        spend = sum(totals.values())
         parts = " · ".join(f"{k} £{v:,.2f}" for k, v in sorted(totals.items(), key=lambda kv: -kv[1]))
-        text = f"Projected spend £{spend:,.2f} across all events — {parts}"
+        text = (f"Projected spend £{spend:,.2f} across all events — {parts}. "
+                f"Sponsor prospects £{income:,.2f} (expected, not confirmed).")
         page = ws["pages"]["money"]
         found = next((b for b in n.children(page) if b["type"] == "callout"), None)
         blk = callout(text, "💷", "green_background")
