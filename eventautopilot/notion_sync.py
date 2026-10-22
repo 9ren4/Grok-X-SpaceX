@@ -62,9 +62,23 @@ def _save_state(state: dict) -> None:
 
 # ---------------------------------------------------------------- rich text / block builders
 
+def _u16(ch: str) -> int:
+    return 2 if ord(ch) > 0xFFFF else 1
+
+
 def _chunks(text: str, n: int = MAX_TEXT) -> list[str]:
+    """Split so each piece is <= n UTF-16 units (Notion's limit; emoji count as 2)."""
     text = text or ""
-    return [text[i:i + n] for i in range(0, len(text), n)] or [""]
+    out, cur, size = [], [], 0
+    for ch in text:
+        w = _u16(ch)
+        if size + w > n:
+            out.append("".join(cur))
+            cur, size = [], 0
+        cur.append(ch)
+        size += w
+    out.append("".join(cur))
+    return [c for c in out if c] or [""]
 
 
 def rt(text: str, link: str = "", bold: bool = False) -> list[dict]:
