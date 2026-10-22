@@ -139,8 +139,8 @@ def lookup_venue(name: str, city: str = "") -> dict | None:
 LUMA_LINK = re.compile(r"(?:https?://)?(?:www\.)?(?:lu\.ma|luma\.com)/[\w-]+", re.I)
 
 
-def luma_registrations(url: str) -> tuple[int, str] | None:
-    """Live registered-guest count and title for a Luma event (not cached: the number changes)."""
+def luma_registrations(url: str) -> dict | None:
+    """Live registered-guest count plus title, start and venue for a Luma event (not cached)."""
     from . import luma
     try:
         ref = luma.parse_ref(url)
@@ -152,7 +152,11 @@ def luma_registrations(url: str) -> tuple[int, str] | None:
             if not evt:
                 return None
             raw = luma._get(client, "/event/get", event_api_id=evt)
-        return int(raw.get("guest_count") or 0), (raw.get("event") or {}).get("name", "")
+        ev = raw.get("event") or {}
+        geo = ev.get("geo_address_info") or {}
+        return {"registered": int(raw.get("guest_count") or 0), "title": ev.get("name", ""),
+                "start": (ev.get("start_at") or "")[:16].replace("T", " "),
+                "venue": geo.get("address") or "", "city": geo.get("city") or ""}
     except Exception:  # noqa: BLE001 — a convenience, never block the interview
         return None
 

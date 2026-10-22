@@ -95,9 +95,13 @@ def intake_turn(body: IntakeIn) -> dict:
     if m and m.group(0) != before.luma_url:  # check who's registered before Grok asks about headcount
         before.luma_url = m.group(0) if "://" in m.group(0) else "https://" + m.group(0)
         got = intake.luma_registrations(before.luma_url)
-        if got:
-            before.luma_registered, before.luma_title = got
-            luma_info = {"registered": got[0], "title": got[1], "url": before.luma_url}
+        if got:  # what Luma already knows is not asked again
+            before.luma_registered, before.luma_title = got["registered"], got["title"]
+            before.title = before.title or got["title"]
+            before.when = before.when or (got["start"] + " UTC" if got["start"] else "")
+            before.venue_name = before.venue_name or got["venue"]
+            before.venue_city = before.venue_city or got["city"]
+            luma_info = {**got, "url": before.luma_url}
     turn = intake.step(body.history, before)
     out = turn.model_dump()
     out["luma"] = luma_info
