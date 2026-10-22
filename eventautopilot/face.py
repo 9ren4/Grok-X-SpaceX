@@ -19,9 +19,14 @@ def publish(result: RunResult, visual_path: Path | None = None) -> dict:
         from . import visuals
         path = Path(visual_path) if visual_path else visuals.render(result)
         out["visual_path"] = str(path)
-        out["visual_url"] = visuals.upload(path)
+        brief = result.spec.raw.get("brief")
+        upload = visuals.upload
+        if brief is not None and brief.store_consent is False:  # organiser declined storage
+            print("visuals: upload skipped (organiser chose not to save)")
+            upload = lambda _p: ""  # noqa: E731
+        out["visual_url"] = upload(path)
         try:
-            out["banner_url"] = visuals.upload(visuals.render(result, size="banner"))
+            out["banner_url"] = upload(visuals.render(result, size="banner"))
         except Exception as e:  # banner is a stretch, never block on it
             print(f"visuals: banner failed ({e})")
     except Exception as e:

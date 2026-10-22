@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 
+import httpx
 from pydantic import BaseModel, Field
 
 from . import llm
@@ -30,6 +31,9 @@ class Brief(BaseModel):
     venue_name: str = ""
     venue_city: str = ""
     venue_booked: bool | None = None
+    venue_address: str = ""                             # set when the organiser confirms the map match
+    venue_confirmed: bool | None = None
+    store_consent: bool | None = None                   # may we save this event to the shared knowledge base?
     venue_cost: float | None = None
     food: str = ""
     food_supplier: str = ""
@@ -85,6 +89,8 @@ def step(history: list[dict], brief: Brief) -> Turn:
     parsed, _tier = llm.complete_json(SYSTEM, user, Turn, fast=True)
     if parsed is not None:
         parsed.brief.covered = [t for t in TOPICS if t in set(parsed.brief.covered) | set(brief.covered)]
+        for f in ("venue_address", "venue_confirmed", "store_consent"):  # set by the UI, not by Grok
+            setattr(parsed.brief, f, getattr(brief, f))
         if all(t in parsed.brief.covered for t in TOPICS):
             parsed.done = True
         return parsed
@@ -103,6 +109,23 @@ def step(history: list[dict], brief: Brief) -> Turn:
     if nxt is None:
         return Turn(reply="Thanks, that's everything. Planning it now.", brief=b, done=True)
     return Turn(reply=FALLBACK_Q[nxt], brief=b)
+
+
+def lookup_venue(name: str, city: str = "") -> dict | None:
+    """Find the venue on OpenStreetMap (free, no key) so the organiser can confirm it's the right place."""
+    q = ", ".join(x for x in (name, city or "London") if x)
+    try:
+        r = httpx.get("https://nominatim.openstreetmap.org/search",
+                      params={"q": q, "format": "jsonv2", "limit": 1, "addressdetails": 1},
+                      headers={"User-Agent": "EventAutopilot/0.1 (community events hackathon)"}, timeout=8)
+        hits = r.json() if r.status_code == 200 else []
+    except Exception:  # noqa: BLE001 — lookup is a convenience, never block the interview
+        return None
+    if not hits:
+        return None
+    h = hits[0]
+    return {"query": q, "name": h.get("name") or name, "address": h.get("display_name", ""),
+            "lat": float(h["lat"]), "lon": float(h["lon"])}
 
 
 def to_source(b: Brief) -> str:
@@ -132,6 +155,8 @@ def apply_basics(spec: EventSpec, b: Brief) -> None:
         spec.venue.name = b.venue_name
     if b.venue_city:
         spec.venue.city = b.venue_city
+    if b.venue_address and b.venue_confirmed:
+        spec.venue.address = b.venue_address
     if b.luma_url and not spec.luma_url:
         spec.luma_url = b.luma_url
     if b.notes:

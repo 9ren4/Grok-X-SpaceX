@@ -583,6 +583,8 @@ def run(source: str, verbose: bool = False, brief: Any = None) -> RunResult:
     facts, entities, relations = build_learnings(spec, degraded=degraded, memories=memories)
     if degraded:
         log.add("degraded: nothing learned", since=t)
+    elif brief is not None and brief.store_consent is False:
+        log.add("remember: skipped (organiser chose not to save this event)", since=t)
     elif memory:
         ok = _step(log, "memory.remember",
                    lambda: (memory.remember(spec.id, facts, entities, relations), True)[1], False)

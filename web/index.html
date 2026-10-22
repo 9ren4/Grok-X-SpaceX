@@ -46,6 +46,11 @@ body.running .hero,body.done .hero,body.chatting .hero{display:none}
 body.running .work,body.done .work,body.chatting .work{display:grid}
 .msg .actions{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
 .typing{color:var(--muted);font-style:italic}
+.venue{margin-top:10px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel-2)}
+.venue iframe{width:100%;height:160px;border:0;display:block}
+.venue .vbody{padding:10px 12px;font-size:13px;white-space:normal}
+.venue .vbody b{display:block;margin-bottom:2px;font-size:14px}
+.ok{color:var(--lime);font-weight:600}
 .chat{display:flex;flex-direction:column;gap:12px;position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px)}
 .thread{overflow:auto;display:flex;flex-direction:column;gap:12px;padding-right:4px}
 .msg{padding:12px 14px;border-radius:14px;max-width:100%;white-space:pre-wrap}
@@ -192,6 +197,41 @@ for (const t of document.querySelectorAll("textarea")) {
 $("#heroForm").addEventListener("submit", e => { e.preventDefault(); send($("#heroInput").value); });
 $("#chatForm").addEventListener("submit", e => { e.preventDefault(); send($("#chatInput").value); });
 
+// ---- venue check: show the map match, the organiser confirms it's the right place
+function venueCard(v) {
+  const d = 0.004, bbox = [v.lon - d, v.lat - d / 2, v.lon + d, v.lat + d / 2].join(",");
+  const gmaps = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(v.address || v.query);
+  const status = h("div", { class: "actions" });
+  const card = h("div", { class: "venue" },
+    h("iframe", { src: `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${v.lat},${v.lon}`, loading: "lazy", title: "Venue map" }),
+    h("div", { class: "vbody" }, h("b", {}, "Is this the place?"), v.address,
+      h("div", { style: "margin-top:6px" }, h("a", { href: gmaps, target: "_blank" }, "Open in Google Maps ↗")), status));
+  status.append(
+    h("button", { class: "small-btn", type: "button", onclick: () => { brief.venue_address = v.address; brief.venue_confirmed = true;
+      status.replaceChildren(h("span", { class: "ok" }, "✓ Venue confirmed")); } }, "Yes, that's it"),
+    h("button", { class: "small-btn", type: "button", onclick: () => { brief.venue_confirmed = false;
+      status.replaceChildren(h("span", { class: "sub" }, "OK, I'll keep the name only. Tell me the address if you like.")); } }, "Not this one"));
+  return card;
+}
+
+// ---- permission before anything is saved to the shared knowledge base
+function askConsent() {
+  const thread = $("#thread");
+  const actions = h("div", { class: "actions" });
+  const msg = h("div", { class: "msg bot" }, h("div", { class: "who" }, "Autopilot"),
+    "Before I plan it: can I save this event's venue, suppliers, sponsors and volunteers to your community's shared knowledge base (Supabase), so future events can reuse them? Images would be stored there too.",
+    actions);
+  const go = consent => {
+    brief.store_consent = consent;
+    actions.replaceChildren(h("span", { class: consent ? "ok" : "sub" }, consent ? "✓ Saving to the knowledge base" : "Not saving: this run only"));
+    start("", brief);
+  };
+  actions.append(
+    h("button", { class: "small-btn", type: "button", onclick: () => go(true) }, "Yes, save it"),
+    h("button", { class: "small-btn", type: "button", onclick: () => go(false) }, "No, just this once"));
+  thread.append(msg); thread.scrollTop = thread.scrollHeight;
+}
+
 // ---- intake interview: Grok asks about each section before anything is planned
 let history = [], brief = {}, interviewing = false;
 function resetInterview() { history = []; brief = {}; interviewing = false; }
@@ -221,12 +261,14 @@ async function send(text) {
     history.push({ role: "assistant", content: turn.reply });
     const msg = h("div", { class: "msg bot" }, h("div", { class: "who" }, "Autopilot"), turn.reply);
     thread.append(msg);
+    if (turn.venue_match) msg.append(venueCard(turn.venue_match));
+    else if (turn.venue_match === null) msg.append(h("div", { class: "sub" }, `Couldn't find "${brief.venue_name}" on the map; I'll keep the name as you said it.`));
     if (turn.done) {
       interviewing = false;
-      start("", brief);
+      askConsent();
     } else {
       msg.append(h("div", { class: "actions" },
-        h("button", { class: "small-btn", type: "button", onclick: e => { e.target.disabled = true; interviewing = false; start("", brief); } },
+        h("button", { class: "small-btn", type: "button", onclick: e => { e.target.disabled = true; interviewing = false; askConsent(); } },
           "Plan now with what I've told you")));
     }
   } catch (err) {

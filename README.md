@@ -10,14 +10,17 @@ Built for Track 3 (Run Sheet, Promo & Newsletter) of the Grok × SpaceX hackatho
 
 ## What it does
 
-1. **Understands the event:** a one-line idea or any public Luma link (title, date, venue, hosts, guest count).
-2. **Recalls what the community already knows:** venues, suppliers, sponsors, volunteers and lessons from past events, stored in a shared knowledge base in Supabase.
-3. **Plans it:** run sheet, budget and volunteer rota. Every budget line says where its number came from, either "memory: <past event>" or "default estimate".
-4. **Writes the promo with Grok:** event page copy, newsletter, LinkedIn post and WhatsApp group message. Organiser-only notes (costs per head, quantities, volunteer counts) are kept out of public copy, and the only link allowed is the real Luma link.
-5. **Renders visuals from HTML templates, not an image model:** a 1080×1080 post and a 1200×627 LinkedIn banner, restyled from one `brand.css`.
-6. **Builds the Notion workspace** for approval (below).
-7. **Learns:** what this event used is written back, so the next organiser starts further ahead. The knowledge graph shows the new event latching onto past venues, suppliers and volunteers.
-8. **Counts the volunteer hours saved** per task against manual baselines.
+1. **Asks before it plans:** Grok interviews the organiser one question at a time about the basics, venue, food, sponsorship, volunteers, budget and posts. "Skip" records nothing. The organiser's answers win, marked "you told us". Numbers with no basis are not invented; they go to "Needs you".
+   - **Venue check:** a named venue is looked up on OpenStreetMap (free, no key) and shown on a map with an "Open in Google Maps" link, so the organiser confirms the right place and the address is filled in.
+   - **Permission first:** before saving anything to the shared knowledge base or uploading images to Supabase, it asks. "No, just this once" runs the plan without storing anything.
+2. **Understands the event:** a one-line idea or any public Luma link (title, date, venue, hosts, guest count).
+3. **Recalls what the community already knows:** venues, suppliers, sponsors, volunteers and lessons from past events, stored in a shared knowledge base in Supabase.
+4. **Plans it:** run sheet, budget and volunteer rota. Every budget line says where its number came from, either "memory: <past event>" or "default estimate".
+5. **Writes the promo with Grok:** event page copy, newsletter, LinkedIn post and WhatsApp group message. Organiser-only notes (costs per head, quantities, volunteer counts) are kept out of public copy, and the only link allowed is the real Luma link.
+6. **Renders visuals from HTML templates, not an image model:** a 1080×1080 post and a 1200×627 LinkedIn banner, restyled from one `brand.css`.
+7. **Builds the Notion workspace** for approval (below).
+8. **Learns:** what this event used is written back, so the next organiser starts further ahead. The knowledge graph shows the new event latching onto past venues, suppliers and volunteers.
+9. **Counts the volunteer hours saved** per task against manual baselines.
 
 | Visual (from code) | Knowledge graph |
 |---|---|

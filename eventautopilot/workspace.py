@@ -193,7 +193,7 @@ def populate(n: Notion, ws: dict, result: RunResult, visual_url: str = "", banne
     _row(n, dbs["spots"], {
         "Name": name(s.venue.name or "Venue TBC"), "Event": _t(ev),
         "Status": _sel("Confirmed" if s.venue.name else "Considering"),
-        "City": _t(s.venue.city), "Capacity": {"number": s.venue.capacity},
+        "City": _t(s.venue.address or s.venue.city), "Capacity": {"number": s.venue.capacity},
         "Hire £": {"number": hire if venue_lines else None},
         "Where the number came from": _t(", ".join(i.source or "estimate" for i, _ in venue_lines)),
         "Money": _rel(*(m for _, m in venue_lines))})

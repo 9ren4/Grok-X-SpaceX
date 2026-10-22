@@ -88,8 +88,13 @@ def status() -> dict:
 @app.post("/api/intake")
 def intake_turn(body: IntakeIn) -> dict:
     from . import intake
-    turn = intake.step(body.history, intake.Brief.model_validate(body.brief or {}))
-    return turn.model_dump()
+    before = intake.Brief.model_validate(body.brief or {})
+    turn = intake.step(body.history, before)
+    out = turn.model_dump()
+    b = turn.brief
+    if b.venue_name and b.venue_name != before.venue_name:  # new venue mentioned: find it on the map
+        out["venue_match"] = intake.lookup_venue(b.venue_name, b.venue_city)
+    return out
 
 
 @app.post("/api/run")
