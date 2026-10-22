@@ -112,6 +112,7 @@ begin
   end if;
   return v_id;
 end $$;
+alter function upsert_entity(text, text, jsonb, uuid, int) set search_path = public;
 revoke execute on function upsert_entity(text, text, jsonb, uuid, int) from public, anon, authenticated;
 grant  execute on function upsert_entity(text, text, jsonb, uuid, int) to service_role;
 
