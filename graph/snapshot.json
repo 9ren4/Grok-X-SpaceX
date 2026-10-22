@@ -1,0 +1,423 @@
+{
+  "generated_at": "2026-10-22T09:00:00Z",
+  "note": "Seeded example graph (snapshot). All nodes are seeded examples.",
+  "nodes": [
+    {
+      "id": "community:London AI Builders",
+      "kind": "community",
+      "name": "London AI Builders",
+      "attrs": {
+        "city": "London",
+        "members": 1240,
+        "channel": "WhatsApp + Luma",
+        "seeded": true
+      },
+      "times_used": 4,
+      "seeded": true,
+      "created_at": "2026-05-01T10:00:00Z"
+    },
+    {
+      "id": "event:AI x Climate, Shoreditch",
+      "kind": "event",
+      "name": "AI x Climate, Shoreditch",
+      "attrs": {
+        "date": "2026-06-12",
+        "attendees": 58,
+        "format": "meetup",
+        "city": "London",
+        "seeded": true
+      },
+      "times_used": 1,
+      "seeded": true,
+      "created_at": "2026-06-12T18:30:00Z"
+    },
+    {
+      "id": "event:Founders Social, Rise",
+      "kind": "event",
+      "name": "Founders Social, Rise",
+      "attrs": {
+        "date": "2026-08-07",
+        "attendees": 72,
+        "format": "social",
+        "city": "London",
+        "seeded": true
+      },
+      "times_used": 1,
+      "seeded": true,
+      "created_at": "2026-08-07T18:30:00Z"
+    },
+    {
+      "id": "event:Climate Builders #2",
+      "kind": "event",
+      "name": "Climate Builders #2",
+      "attrs": {
+        "date": "2026-09-18",
+        "attendees": 64,
+        "format": "meetup",
+        "city": "London",
+        "seeded": true
+      },
+      "times_used": 1,
+      "seeded": true,
+      "created_at": "2026-09-18T18:30:00Z"
+    },
+    {
+      "id": "event:AI x Climate Meetup",
+      "kind": "event",
+      "name": "AI x Climate Meetup",
+      "attrs": {
+        "date": "2026-11-14",
+        "expected_attendees": 60,
+        "format": "meetup",
+        "city": "London",
+        "luma_url": "https://lu.ma/ai-climate-nov",
+        "seeded": true
+      },
+      "times_used": 1,
+      "seeded": true,
+      "created_at": "2026-10-22T09:00:00Z"
+    },
+    {
+      "id": "venue:Rise London",
+      "kind": "venue",
+      "name": "Rise London",
+      "attrs": {
+        "capacity": 80,
+        "city": "London",
+        "area": "Shoreditch",
+        "av": "projector + 2 mics",
+        "quirk": "lift closes at 22:00",
+        "seeded": true
+      },
+      "times_used": 3,
+      "seeded": true,
+      "created_at": "2026-08-07T18:30:00Z"
+    },
+    {
+      "id": "venue:Second Home Shoreditch",
+      "kind": "venue",
+      "name": "Second Home Shoreditch",
+      "attrs": {
+        "capacity": 120,
+        "city": "London",
+        "area": "Spitalfields",
+        "quirk": "no hot food after 21:00",
+        "seeded": true
+      },
+      "times_used": 1,
+      "seeded": true,
+      "created_at": "2026-06-12T18:30:00Z"
+    },
+    {
+      "id": "supplier:Pizza Pilgrims",
+      "kind": "supplier",
+      "name": "Pizza Pilgrims",
+      "attrs": {
+        "category": "catering",
+        "price_per_head": "£2.37",
+        "note": "60 people ate 15 pizzas, £142",
+        "lead_time": "48h",
+        "seeded": true
+      },
+      "times_used": 3,
+      "seeded": true,
+      "created_at": "2026-06-12T18:30:00Z"
+    },
+    {
+      "id": "supplier:Ozone Coffee",
+      "kind": "supplier",
+      "name": "Ozone Coffee",
+      "attrs": {
+        "category": "drinks",
+        "price_per_head": "£1.80",
+        "seeded": true
+      },
+      "times_used": 1,
+      "seeded": true,
+      "created_at": "2026-08-07T18:30:00Z"
+    },
+    {
+      "id": "supplier:Signal Print Co",
+      "kind": "supplier",
+      "name": "Signal Print Co",
+      "attrs": {
+        "category": "print",
+        "item": "name badges + banner",
+        "price": "£64",
+        "seeded": true
+      },
+      "times_used": 1,
+      "seeded": true,
+      "created_at": "2026-09-18T18:30:00Z"
+    },
+    {
+      "id": "sponsor:Climate Collective Fund",
+      "kind": "sponsor",
+      "name": "Climate Collective Fund",
+      "attrs": {
+        "amount": "£500",
+        "contact": "partnerships@",
+        "ask": "logo on slides + 2 min intro",
+        "seeded": true
+      },
+      "times_used": 2,
+      "seeded": true,
+      "created_at": "2026-06-12T18:30:00Z"
+    },
+    {
+      "id": "sponsor:GreenStack Cloud",
+      "kind": "sponsor",
+      "name": "GreenStack Cloud",
+      "attrs": {
+        "amount": "£300",
+        "perk": "cloud credits for attendees",
+        "seeded": true
+      },
+      "times_used": 1,
+      "seeded": true,
+      "created_at": "2026-09-18T18:30:00Z"
+    },
+    {
+      "id": "volunteer:Sam",
+      "kind": "volunteer",
+      "name": "Sam",
+      "attrs": {
+        "roles": "check-in, setup",
+        "reliability": "4/4 shifts",
+        "note": "knows Rise London AV",
+        "seeded": true
+      },
+      "times_used": 4,
+      "seeded": true,
+      "created_at": "2026-06-12T18:30:00Z"
+    },
+    {
+      "id": "volunteer:Lena",
+      "kind": "volunteer",
+      "name": "Lena",
+      "attrs": {
+        "roles": "photo",
+        "reliability": "2/2 shifts",
+        "seeded": true
+      },
+      "times_used": 2,
+      "seeded": true,
+      "created_at": "2026-06-12T18:30:00Z"
+    },
+    {
+      "id": "volunteer:Dev",
+      "kind": "volunteer",
+      "name": "Dev",
+      "attrs": {
+        "roles": "floor, teardown",
+        "reliability": "2/2 shifts",
+        "seeded": true
+      },
+      "times_used": 2,
+      "seeded": true,
+      "created_at": "2026-08-07T18:30:00Z"
+    }
+  ],
+  "edges": [
+    {
+      "source": "community:London AI Builders",
+      "relation": "organised",
+      "target": "event:AI x Climate, Shoreditch",
+      "event_id": "event:AI x Climate, Shoreditch"
+    },
+    {
+      "source": "community:London AI Builders",
+      "relation": "organised",
+      "target": "event:Founders Social, Rise",
+      "event_id": "event:Founders Social, Rise"
+    },
+    {
+      "source": "community:London AI Builders",
+      "relation": "organised",
+      "target": "event:Climate Builders #2",
+      "event_id": "event:Climate Builders #2"
+    },
+    {
+      "source": "community:London AI Builders",
+      "relation": "organised",
+      "target": "event:AI x Climate Meetup",
+      "event_id": "event:AI x Climate Meetup"
+    },
+    {
+      "source": "venue:Second Home Shoreditch",
+      "relation": "hosted",
+      "target": "event:AI x Climate, Shoreditch",
+      "event_id": "event:AI x Climate, Shoreditch"
+    },
+    {
+      "source": "venue:Rise London",
+      "relation": "hosted",
+      "target": "event:Founders Social, Rise",
+      "event_id": "event:Founders Social, Rise"
+    },
+    {
+      "source": "venue:Rise London",
+      "relation": "hosted",
+      "target": "event:Climate Builders #2",
+      "event_id": "event:Climate Builders #2"
+    },
+    {
+      "source": "venue:Rise London",
+      "relation": "hosted",
+      "target": "event:AI x Climate Meetup",
+      "event_id": "event:AI x Climate Meetup"
+    },
+    {
+      "source": "supplier:Pizza Pilgrims",
+      "relation": "catered",
+      "target": "event:AI x Climate, Shoreditch",
+      "event_id": "event:AI x Climate, Shoreditch"
+    },
+    {
+      "source": "supplier:Pizza Pilgrims",
+      "relation": "catered",
+      "target": "event:Climate Builders #2",
+      "event_id": "event:Climate Builders #2"
+    },
+    {
+      "source": "supplier:Pizza Pilgrims",
+      "relation": "catered",
+      "target": "event:AI x Climate Meetup",
+      "event_id": "event:AI x Climate Meetup"
+    },
+    {
+      "source": "supplier:Ozone Coffee",
+      "relation": "catered",
+      "target": "event:Founders Social, Rise",
+      "event_id": "event:Founders Social, Rise"
+    },
+    {
+      "source": "supplier:Signal Print Co",
+      "relation": "supplied",
+      "target": "event:Climate Builders #2",
+      "event_id": "event:Climate Builders #2"
+    },
+    {
+      "source": "sponsor:Climate Collective Fund",
+      "relation": "sponsored",
+      "target": "event:AI x Climate, Shoreditch",
+      "event_id": "event:AI x Climate, Shoreditch"
+    },
+    {
+      "source": "sponsor:Climate Collective Fund",
+      "relation": "sponsored",
+      "target": "event:Climate Builders #2",
+      "event_id": "event:Climate Builders #2"
+    },
+    {
+      "source": "sponsor:GreenStack Cloud",
+      "relation": "sponsored",
+      "target": "event:Climate Builders #2",
+      "event_id": "event:Climate Builders #2"
+    },
+    {
+      "source": "volunteer:Sam",
+      "relation": "ran_shift",
+      "target": "event:AI x Climate, Shoreditch",
+      "event_id": "event:AI x Climate, Shoreditch"
+    },
+    {
+      "source": "volunteer:Sam",
+      "relation": "ran_shift",
+      "target": "event:Founders Social, Rise",
+      "event_id": "event:Founders Social, Rise"
+    },
+    {
+      "source": "volunteer:Sam",
+      "relation": "ran_shift",
+      "target": "event:Climate Builders #2",
+      "event_id": "event:Climate Builders #2"
+    },
+    {
+      "source": "volunteer:Sam",
+      "relation": "ran_shift",
+      "target": "event:AI x Climate Meetup",
+      "event_id": "event:AI x Climate Meetup"
+    },
+    {
+      "source": "volunteer:Lena",
+      "relation": "ran_shift",
+      "target": "event:AI x Climate, Shoreditch",
+      "event_id": "event:AI x Climate, Shoreditch"
+    },
+    {
+      "source": "volunteer:Lena",
+      "relation": "ran_shift",
+      "target": "event:Climate Builders #2",
+      "event_id": "event:Climate Builders #2"
+    },
+    {
+      "source": "volunteer:Dev",
+      "relation": "ran_shift",
+      "target": "event:Founders Social, Rise",
+      "event_id": "event:Founders Social, Rise"
+    },
+    {
+      "source": "volunteer:Dev",
+      "relation": "ran_shift",
+      "target": "event:Climate Builders #2",
+      "event_id": "event:Climate Builders #2"
+    }
+  ],
+  "memories": [
+    {
+      "kind": "budget",
+      "text": "60 people ate 15 pizzas, £142 from Pizza Pilgrims",
+      "entity_id": "supplier:Pizza Pilgrims",
+      "event_id": "event:AI x Climate, Shoreditch"
+    },
+    {
+      "kind": "supplier",
+      "text": "Pizza Pilgrims needs 48h notice for orders over 10 pizzas",
+      "entity_id": "supplier:Pizza Pilgrims",
+      "event_id": "event:Climate Builders #2"
+    },
+    {
+      "kind": "venue",
+      "text": "Rise London: lift closes at 22:00, plan teardown by 21:45",
+      "entity_id": "venue:Rise London",
+      "event_id": "event:Founders Social, Rise"
+    },
+    {
+      "kind": "venue",
+      "text": "Rise London AV: projector + 2 mics, bring HDMI-C adapter",
+      "entity_id": "venue:Rise London",
+      "event_id": "event:Climate Builders #2"
+    },
+    {
+      "kind": "venue",
+      "text": "Second Home Shoreditch: no hot food after 21:00",
+      "entity_id": "venue:Second Home Shoreditch",
+      "event_id": "event:AI x Climate, Shoreditch"
+    },
+    {
+      "kind": "volunteer",
+      "text": "Sam ran check-in at every event so far, knows the Rise London AV",
+      "entity_id": "volunteer:Sam",
+      "event_id": "event:Climate Builders #2"
+    },
+    {
+      "kind": "volunteer",
+      "text": "Lena's photos got 3x engagement on LinkedIn",
+      "entity_id": "volunteer:Lena",
+      "event_id": "event:AI x Climate, Shoreditch"
+    },
+    {
+      "kind": "budget",
+      "text": "Climate Collective Fund gave £500 for logo on slides + 2 min intro",
+      "entity_id": "sponsor:Climate Collective Fund",
+      "event_id": "event:AI x Climate, Shoreditch"
+    },
+    {
+      "kind": "lesson",
+      "text": "Founders Social over-ordered coffee by ~30%",
+      "entity_id": "supplier:Ozone Coffee",
+      "event_id": "event:Founders Social, Rise"
+    }
+  ]
+}
