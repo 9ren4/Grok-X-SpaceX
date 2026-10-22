@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Community Knowledge Graph</title>
+<script>
+  // Optional inline Supabase config. URL params ?supabase=<url>&key=<anon key> override these.
+  const CONFIG = { SUPABASE_URL: "", SUPABASE_ANON_KEY: "" };
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js"></script>
+<style>
+  :root {
+    --bg: #0b0f17; --panel: #121826; --panel-2: #192134; --line: #263049;
+    --text: #e8ecf4; --muted: #8b96ad; --accent: #ffd166; --ok: #4ade80; --warn: #f59e0b;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif; }
+  body { display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
+  header { display: flex; align-items: center; gap: 24px; padding: 14px 24px; border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #111827, #0b0f17); flex-wrap: wrap; }
+  h1 { font-size: 26px; margin: 0; letter-spacing: -0.01em; font-weight: 700; }
+  .counts { display: flex; gap: 18px; font-size: 18px; color: var(--muted); }
+  .counts b { color: var(--text); font-size: 22px; margin-right: 4px; font-variant-numeric: tabular-nums; }
+  .source { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase; border: 1px solid currentColor; }
+  .badge.live { color: var(--ok); }
+  .badge.file { color: #60a5fa; }
+  .badge.snapshot { color: var(--warn); background: rgba(245,158,11,0.12); }
+  .spacer { flex: 1; }
+  button { font: inherit; font-size: 16px; font-weight: 600; color: var(--text); background: var(--panel-2);
+    border: 1px solid var(--line); padding: 9px 16px; border-radius: 10px; cursor: pointer; }
+  button:hover { border-color: #3b4766; background: #1f2940; }
+  button.primary { background: var(--accent); color: #1b1300; border-color: var(--accent); }
+  button.primary:hover { filter: brightness(1.08); }
+  main { position: relative; display: grid; grid-template-columns: 1fr 400px; min-height: 0; }
+  #cy { position: relative; min-height: 0; }
+  .legend { position: absolute; left: 20px; bottom: 20px; background: rgba(18,24,38,0.88); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 16px; display: grid; gap: 7px; font-size: 16px; z-index: 5; backdrop-filter: blur(6px); }
+  .legend .row { display: flex; align-items: center; gap: 10px; }
+  .legend .dot { width: 16px; height: 16px; border-radius: 50%; }
+  .legend .hint { color: var(--muted); font-size: 13px; margin-top: 4px; border-top: 1px solid var(--line); padding-top: 8px; }
+  .toast { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #1b1300;
+    padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 17px; z-index: 6; opacity: 0;
+    transition: opacity .3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  aside { border-left: 1px solid var(--line); background: var(--panel); overflow-y: auto; padding: 22px; min-height: 0; }
+  aside h2 { margin: 0 0 6px; font-size: 26px; line-height: 1.2; }
+  aside h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 22px 0 8px; }
+  .kindtag { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; }
+  .kindtag .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .tag { font-size: 13px; padding: 3px 9px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); }
+  .tag.seeded { color: var(--warn); border-color: rgba(245,158,11,.5); }
+  .tag.new { color: var(--accent); border-color: var(--accent); }
+  .big { font-size: 40px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .big small { font-size: 15px; color: var(--muted); font-weight: 500; margin-left: 6px; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; font-size: 15px; }
+  dt { color: var(--muted); }
+  dd { margin: 0; word-break: break-word; }
+  ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+  li.link { display: flex; align-items: center; gap: 8px; font-size: 15px; padding: 6px 10px; border-radius: 8px;
+    background: var(--panel-2); cursor: pointer; }
+  li.link:hover { background: #222c44; }
+  li.link .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  li.mem { font-size: 14px; padding: 8px 10px; border-radius: 8px; background: var(--panel-2); border-left: 3px solid var(--accent); }
+  li.mem .prov { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .rel { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; margin: 10px 0 5px; }
+  .empty { color: var(--muted); font-size: 16px; line-height: 1.5; }
+  .empty b { color: var(--text); }
+  .err { color: #f87171; font-size: 14px; margin-top: 10px; }
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; grid-template-rows: 1fr 40vh; }
+    aside { border-left: 0; border-top: 1px solid var(--line); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Community Knowledge Graph</h1>
+  <div class="counts">
+    <span><b id="n-ent">0</b>entities</span>
+    <span><b id="n-rel">0</b>relations</span>
+    <span><b id="n-evt">0</b>events</span>
+  </div>
+  <div class="source">source: <span id="src-badge" class="badge">loading</span> <span id="src-detail"></span></div>
+  <div class="spacer"></div>
+  <button id="btn-latest" class="primary">Highlight latest event</button>
+  <button id="btn-reset">Reset view</button>
+  <button id="btn-refresh">Refresh</button>
+</header>
+<main>
+  <div id="cy">
+    <div class="toast" id="toast"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+  <aside id="panel">
+    <div class="empty">
+      <p><b>Click any node</b> to see what the community remembers about it.</p>
+      <p>Node size = how many events reused it. The big nodes are what every new organiser inherits.</p>
+    </div>
+  </aside>
+</main>
+
+<!-- Inline copy of snapshot.json so the page works from file:// (fetch is blocked there).
+     Keep in sync: see graph/README.md -->
+<script id="snapshot-inline" type="application/json">
+{"generated_at":"2026-10-22T09:00:00Z","note":"Seeded example graph (snapshot). All nodes are seeded examples.","nodes":[{"id":"community:London AI Builders","kind":"community","name":"London AI Builders","attrs":{"city":"London","members":1240,"channel":"WhatsApp + Luma","seeded":true},"times_used":4,"seeded":true,"created_at":"2026-05-01T10:00:00Z"},{"id":"event:AI x Climate, Shoreditch","kind":"event","name":"AI x Climate, Shoreditch","attrs":{"date":"2026-06-12","attendees":58,"format":"meetup","city":"London","seeded":true},"times_used":1,"seeded":true,"created_at":"2026-06-12T18:30:00Z"},{"id":"event:Founders Social, Rise","kind":"event","name":"Founders Social, Rise","attrs":{"date":"2026-08-07","attendees":72,"format":"social","city":"London","seeded":true},"times_used":1,"seeded":true,"created_at":"2026-08-07T18:30:00Z"},{"id":"event:Climate Builders #2","kind":"event","name":"Climate Builders #2","attrs":{"date":"2026-09-18","attendees":64,"format":"meetup","city":"London","seeded":true},"times_used":1,"seeded":true,"created_at":"2026-09-18T18:30:00Z"},{"id":"event:AI x Climate Meetup","kind":"event","name":"AI x Climate Meetup","attrs":{"date":"2026-11-14","expected_attendees":60,"format":"meetup","city":"London","luma_url":"https://lu.ma/ai-climate-nov","seeded":true},"times_used":1,"seeded":true,"created_at":"2026-10-22T09:00:00Z"},{"id":"venue:Rise London","kind":"venue","name":"Rise London","attrs":{"capacity":80,"city":"London","area":"Shoreditch","av":"projector + 2 mics","quirk":"lift closes at 22:00","seeded":true},"times_used":3,"seeded":true,"created_at":"2026-08-07T18:30:00Z"},{"id":"venue:Second Home Shoreditch","kind":"venue","name":"Second Home Shoreditch","attrs":{"capacity":120,"city":"London","area":"Spitalfields","quirk":"no hot food after 21:00","seeded":true},"times_used":1,"seeded":true,"created_at":"2026-06-12T18:30:00Z"},{"id":"supplier:Pizza Pilgrims","kind":"supplier","name":"Pizza Pilgrims","attrs":{"category":"catering","price_per_head":"£2.37","note":"60 people ate 15 pizzas, £142","lead_time":"48h","seeded":true},"times_used":3,"seeded":true,"created_at":"2026-06-12T18:30:00Z"},{"id":"supplier:Ozone Coffee","kind":"supplier","name":"Ozone Coffee","attrs":{"category":"drinks","price_per_head":"£1.80","seeded":true},"times_used":1,"seeded":true,"created_at":"2026-08-07T18:30:00Z"},{"id":"supplier:Signal Print Co","kind":"supplier","name":"Signal Print Co","attrs":{"category":"print","item":"name badges + banner","price":"£64","seeded":true},"times_used":1,"seeded":true,"created_at":"2026-09-18T18:30:00Z"},{"id":"sponsor:Climate Collective Fund","kind":"sponsor","name":"Climate Collective Fund","attrs":{"amount":"£500","contact":"partnerships@","ask":"logo on slides + 2 min intro","seeded":true},"times_used":2,"seeded":true,"created_at":"2026-06-12T18:30:00Z"},{"id":"sponsor:GreenStack Cloud","kind":"sponsor","name":"GreenStack Cloud","attrs":{"amount":"£300","perk":"cloud credits for attendees","seeded":true},"times_used":1,"seeded":true,"created_at":"2026-09-18T18:30:00Z"},{"id":"volunteer:Sam","kind":"volunteer","name":"Sam","attrs":{"roles":"check-in, setup","reliability":"4/4 shifts","note":"knows Rise London AV","seeded":true},"times_used":4,"seeded":true,"created_at":"2026-06-12T18:30:00Z"},{"id":"volunteer:Lena","kind":"volunteer","name":"Lena","attrs":{"roles":"photo","reliability":"2/2 shifts","seeded":true},"times_used":2,"seeded":true,"created_at":"2026-06-12T18:30:00Z"},{"id":"volunteer:Dev","kind":"volunteer","name":"Dev","attrs":{"roles":"floor, teardown","reliability":"2/2 shifts","seeded":true},"times_used":2,"seeded":true,"created_at":"2026-08-07T18:30:00Z"}],"edges":[{"source":"community:London AI Builders","relation":"organised","target":"event:AI x Climate, Shoreditch","event_id":"event:AI x Climate, Shoreditch"},{"source":"community:London AI Builders","relation":"organised","target":"event:Founders Social, Rise","event_id":"event:Founders Social, Rise"},{"source":"community:London AI Builders","relation":"organised","target":"event:Climate Builders #2","event_id":"event:Climate Builders #2"},{"source":"community:London AI Builders","relation":"organised","target":"event:AI x Climate Meetup","event_id":"event:AI x Climate Meetup"},{"source":"venue:Second Home Shoreditch","relation":"hosted","target":"event:AI x Climate, Shoreditch","event_id":"event:AI x Climate, Shoreditch"},{"source":"venue:Rise London","relation":"hosted","target":"event:Founders Social, Rise","event_id":"event:Founders Social, Rise"},{"source":"venue:Rise London","relation":"hosted","target":"event:Climate Builders #2","event_id":"event:Climate Builders #2"},{"source":"venue:Rise London","relation":"hosted","target":"event:AI x Climate Meetup","event_id":"event:AI x Climate Meetup"},{"source":"supplier:Pizza Pilgrims","relation":"catered","target":"event:AI x Climate, Shoreditch","event_id":"event:AI x Climate, Shoreditch"},{"source":"supplier:Pizza Pilgrims","relation":"catered","target":"event:Climate Builders #2","event_id":"event:Climate Builders #2"},{"source":"supplier:Pizza Pilgrims","relation":"catered","target":"event:AI x Climate Meetup","event_id":"event:AI x Climate Meetup"},{"source":"supplier:Ozone Coffee","relation":"catered","target":"event:Founders Social, Rise","event_id":"event:Founders Social, Rise"},{"source":"supplier:Signal Print Co","relation":"supplied","target":"event:Climate Builders #2","event_id":"event:Climate Builders #2"},{"source":"sponsor:Climate Collective Fund","relation":"sponsored","target":"event:AI x Climate, Shoreditch","event_id":"event:AI x Climate, Shoreditch"},{"source":"sponsor:Climate Collective Fund","relation":"sponsored","target":"event:Climate Builders #2","event_id":"event:Climate Builders #2"},{"source":"sponsor:GreenStack Cloud","relation":"sponsored","target":"event:Climate Builders #2","event_id":"event:Climate Builders #2"},{"source":"volunteer:Sam","relation":"ran_shift","target":"event:AI x Climate, Shoreditch","event_id":"event:AI x Climate, Shoreditch"},{"source":"volunteer:Sam","relation":"ran_shift","target":"event:Founders Social, Rise","event_id":"event:Founders Social, Rise"},{"source":"volunteer:Sam","relation":"ran_shift","target":"event:Climate Builders #2","event_id":"event:Climate Builders #2"},{"source":"volunteer:Sam","relation":"ran_shift","target":"event:AI x Climate Meetup","event_id":"event:AI x Climate Meetup"},{"source":"volunteer:Lena","relation":"ran_shift","target":"event:AI x Climate, Shoreditch","event_id":"event:AI x Climate, Shoreditch"},{"source":"volunteer:Lena","relation":"ran_shift","target":"event:Climate Builders #2","event_id":"event:Climate Builders #2"},{"source":"volunteer:Dev","relation":"ran_shift","target":"event:Founders Social, Rise","event_id":"event:Founders Social, Rise"},{"source":"volunteer:Dev","relation":"ran_shift","target":"event:Climate Builders #2","event_id":"event:Climate Builders #2"}],"memories":[{"kind":"budget","text":"60 people ate 15 pizzas, £142 from Pizza Pilgrims","entity_id":"supplier:Pizza Pilgrims","event_id":"event:AI x Climate, Shoreditch"},{"kind":"supplier","text":"Pizza Pilgrims needs 48h notice for orders over 10 pizzas","entity_id":"supplier:Pizza Pilgrims","event_id":"event:Climate Builders #2"},{"kind":"venue","text":"Rise London: lift closes at 22:00, plan teardown by 21:45","entity_id":"venue:Rise London","event_id":"event:Founders Social, Rise"},{"kind":"venue","text":"Rise London AV: projector + 2 mics, bring HDMI-C adapter","entity_id":"venue:Rise London","event_id":"event:Climate Builders #2"},{"kind":"venue","text":"Second Home Shoreditch: no hot food after 21:00","entity_id":"venue:Second Home Shoreditch","event_id":"event:AI x Climate, Shoreditch"},{"kind":"volunteer","text":"Sam ran check-in at every event so far, knows the Rise London AV","entity_id":"volunteer:Sam","event_id":"event:Climate Builders #2"},{"kind":"volunteer","text":"Lena's photos got 3x engagement on LinkedIn","entity_id":"volunteer:Lena","event_id":"event:AI x Climate, Shoreditch"},{"kind":"budget","text":"Climate Collective Fund gave £500 for logo on slides + 2 min intro","entity_id":"sponsor:Climate Collective Fund","event_id":"event:AI x Climate, Shoreditch"},{"kind":"lesson","text":"Founders Social over-ordered coffee by ~30%","entity_id":"supplier:Ozone Coffee","event_id":"event:Founders Social, Rise"}]}
+</script>
+
+<script>
+(() => {
+  "use strict";
+
+  const KINDS = {
+    event:     { color: "#ffd166", label: "Event" },
+    venue:     { color: "#4cc9f0", label: "Venue" },
+    supplier:  { color: "#f72585", label: "Supplier" },
+    sponsor:   { color: "#b388ff", label: "Sponsor" },
+    volunteer: { color: "#4ade80", label: "Volunteer" },
+    community: { color: "#fb923c", label: "Community" },
+    _default:  { color: "#94a3b8", label: "Other" },
+  };
+  const kindInfo = k => KINDS[k] || KINDS._default;
+  // how an edge reads from the target's side (event panel: "hosted by Rise London")
+  const INCOMING = { hosted: "hosted by", catered: "catered by", sponsored: "sponsored by", ran_shift: "volunteers",
+                     supplied: "supplied by", organised: "organised by", organized: "organised by" };
+
+  const params = new URLSearchParams(location.search);
+  const SUPA_URL = (params.get("supabase") || CONFIG.SUPABASE_URL || "").replace(/\/+$/, "");
+  const SUPA_KEY = params.get("key") || CONFIG.SUPABASE_ANON_KEY || "";
+
+  let cy = null;
+  let model = null;          // { nodes: Map, edges: [], memories: [], source, detail }
+  let prevIds = null;        // Set of node ids from the previous load (for "new" diff)
+  let newIds = new Set();
+  let pulseTimer = null;
+
+  // ---------- data loading ----------
+  async function fetchJSON(url, opts) {
+    const r = await fetch(url, Object.assign({ cache: "no-store" }, opts || {}));
+    if (!r.ok) throw new Error(url + " → HTTP " + r.status);
+    return r.json();
+  }
+
+  async function loadSupabase() {
+    const h = { headers: { apikey: SUPA_KEY, Authorization: "Bearer " + SUPA_KEY } };
+    const [entities, relations] = await Promise.all([
+      fetchJSON(SUPA_URL + "/rest/v1/entities?select=*", h),
+      fetchJSON(SUPA_URL + "/rest/v1/relations?select=*", h),
+    ]);
+    let memories = [];
+    try { memories = await fetchJSON(SUPA_URL + "/rest/v1/memories?select=kind,text,entity_id,event_id,created_at", h); }
+    catch (e) { console.info("memories not readable:", e.message); }
+    return { nodes: entities, edges: relations, memories };
+  }
+
+  async function loadData() {
+    const errors = [];
+    if (SUPA_URL && SUPA_KEY) {
+      try { return { raw: await loadSupabase(), source: "live", detail: "Supabase " + SUPA_URL.replace(/^https?:\/\//, "") }; }
+      catch (e) { errors.push(e.message); }
+    }
+    if (location.protocol === "file:") {  // fetch() is blocked on file://, go straight to the inline copy
+      const raw = JSON.parse(document.getElementById("snapshot-inline").textContent);
+      return { raw, source: "snapshot", detail: "seeded example data (inline, file://)", errors };
+    }
+    for (const [url, label] of [["../out/graph.json", "out/graph.json"], ["./graph.json", "graph.json"]]) {
+      try { return { raw: await fetchJSON(url), source: "file", detail: label }; }
+      catch (e) { errors.push(e.message); }
+    }
+    try { return { raw: await fetchJSON("./snapshot.json"), source: "snapshot", detail: "seeded example data", errors }; }
+    catch (e) { errors.push(e.message); }
+    const raw = JSON.parse(document.getElementById("snapshot-inline").textContent);
+    return { raw, source: "snapshot", detail: "seeded example data (inline)", errors };
+  }
+
+  // ---------- normalisation ----------
+  const keyOf = (kind, name) => (String(kind || "") + ":" + String(name || "")).toLowerCase();
+  const isTrue = v => v === true || v === "true" || v === 1;
+  function parseAttrs(a) {
+    if (!a) return {};
+    if (typeof a === "string") { try { return JSON.parse(a) || {}; } catch { return { value: a }; } }
+    return a;
+  }
+
+  function normalise(raw) {
+    const rawNodes = raw.nodes || raw.entities || [];
+    const rawEdges = raw.edges || raw.relations || [];
+    const nodes = new Map();
+    const alias = new Map(); // id / "kind:name" (lowercase) -> canonical id
+    rawNodes.forEach((r, i) => {
+      const d = r.data || r; // tolerate cytoscape-style {data:{…}}
+      const kind = String(d.kind || d.type || "other").toLowerCase();
+      const name = d.name || d.label || d.title || String(d.id);
+      const id = String(d.id != null ? d.id : keyOf(kind, name));
+      const attrs = parseAttrs(d.attrs);
+      const n = {
+        id, kind, name, attrs,
+        times_used: Number(d.times_used != null ? d.times_used : 1) || 0,
+        seeded: isTrue(d.seeded) || isTrue(attrs.seeded),
+        created_at: d.created_at || null,
+        order: i,
+      };
+      nodes.set(id, n);
+      alias.set(id.toLowerCase(), id);
+      alias.set(keyOf(kind, name), id);
+    });
+    const resolve = ref => {
+      if (ref == null) return null;
+      if (typeof ref === "object") ref = ref.id != null ? ref.id : keyOf(ref.kind, ref.name);
+      return alias.get(String(ref).toLowerCase()) || null;
+    };
+    const edges = [];
+    rawEdges.forEach((r, i) => {
+      const d = r.data || r;
+      const s = resolve(d.source != null ? d.source : d.source_id);
+      const t = resolve(d.target != null ? d.target : d.target_id);
+      if (!s || !t) { console.warn("graph: dropping edge with unknown endpoint", d); return; }
+      edges.push({
+        id: "e" + i + ":" + s + "->" + t,
+        source: s, target: t,
+        relation: String(d.relation || d.label || "related"),
+        event_id: d.event_id != null ? resolve(d.event_id) || String(d.event_id) : null,
+        created_at: d.created_at || null,
+      });
+    });
+    const memories = (raw.memories || []).map(m => ({
+      kind: m.kind, text: m.text,
+      entity_id: resolve(m.entity_id) || m.entity_id || null,
+      event_id: resolve(m.event_id) || m.event_id || null,
+    }));
+    return { nodes, edges, memories };
+  }
+
+  // ---------- rendering ----------
+  const sizeFor = n => n.kind === "event" ? 70 : Math.round(44 + 42 * Math.sqrt(Math.max(0, Math.min(n.times_used, 12) - 1)));
+
+  function buildElements(m) {
+    const els = [];
+    for (const n of m.nodes.values()) {
+      els.push({ group: "nodes", data: {
+        id: n.id, label: n.name, kind: n.kind, color: kindInfo(n.kind).color, size: sizeFor(n),
+        fontSize: n.kind === "event" ? 22 : Math.min(32, 19 + 3 * Math.max(0, n.times_used - 1)),
+      }, classes: n.kind });
+    }
+    for (const e of m.edges) {
+      els.push({ group: "edges", data: { id: e.id, source: e.source, target: e.target, label: e.relation.replace(/_/g, " ") } });
+    }
+    return els;
+  }
+
+  const STYLE = [
+    { selector: "node", style: {
+      "background-color": "data(color)", width: "data(size)", height: "data(size)",
+      label: "data(label)", color: "#e8ecf4", "font-size": "data(fontSize)", "font-weight": 600,
+      "text-valign": "bottom", "text-margin-y": 7, "text-outline-color": "#0b0f17", "text-outline-width": 4,
+      "text-wrap": "wrap", "text-max-width": 210, "border-width": 3, "border-color": "#0b0f17",
+      "transition-property": "opacity, border-width, border-color, background-opacity", "transition-duration": "0.35s",
+    }},
+    { selector: "node.event", style: { shape: "round-diamond", "font-size": "data(fontSize)", color: "#ffe7a3" } },
+    { selector: "node.community", style: { shape: "round-hexagon" } },
+    { selector: "edge", style: {
+      width: 2.5, "line-color": "#3a4766", "target-arrow-color": "#3a4766", "target-arrow-shape": "triangle",
+      "arrow-scale": 1.2, "curve-style": "bezier", label: "data(label)", "font-size": 16, color: "#a9b4cc",
+      "text-rotation": "autorotate", "text-background-color": "#0b0f17", "text-background-opacity": 0.85,
+      "text-background-padding": 3, "text-background-shape": "roundrectangle",
+      "transition-property": "opacity, line-color, width", "transition-duration": "0.35s",
+    }},
+    { selector: ".dim", style: { opacity: 0.12 } },
+    { selector: "edge.hl", style: { "line-color": "#ffd166", "target-arrow-color": "#ffd166", width: 5, color: "#ffe7a3", "font-size": 16, "z-index": 10 } },
+    { selector: "node.hl", style: { "border-color": "#ffd166", "border-width": 5, "z-index": 10 } },
+    { selector: "node.focus", style: { "border-color": "#ffffff", "border-width": 8 } },
+    { selector: "node.pulse", style: { "border-width": 16, "border-color": "#ffd166", "border-opacity": 0.55 } },
+    { selector: "node.isnew", style: { "border-color": "#ffd166", "border-width": 6, "border-style": "double" } },
+    { selector: "node:selected", style: { "border-color": "#ffffff", "border-width": 6 } },
+  ];
+
+  function layoutOpts(randomize) {
+    return {
+      name: "cose", animate: !randomize, animationDuration: 700, randomize, fit: true, padding: 70,
+      nodeRepulsion: () => 30000, idealEdgeLength: () => 130, edgeElasticity: () => 80,
+      nodeOverlap: 30, gravity: 0.35, numIter: 2500, componentSpacing: 120, nodeDimensionsIncludeLabels: true,
+    };
+  }
+
+  function render(m, keepPositions) {
+    const els = buildElements(m);
+    if (!cy) {
+      cy = cytoscape({ container: document.getElementById("cy"), elements: els, style: STYLE,
+        minZoom: 0.2, maxZoom: 3, layout: layoutOpts(true) });
+      cy.on("tap", "node", ev => { showNode(ev.target.id()); focusNode(ev.target.id()); });
+      cy.on("tap", ev => { if (ev.target === cy) { clearHighlight(); showEmpty(); } });
+      return;
+    }
+    const old = {};
+    if (keepPositions) cy.nodes().forEach(n => { old[n.id()] = Object.assign({}, n.position()); });
+    cy.elements().remove();
+    cy.add(els);
+    if (keepPositions) {
+      // existing nodes keep their spot; new ones start near their first known neighbour
+      cy.nodes().forEach(n => {
+        if (old[n.id()]) { n.position(old[n.id()]); return; }
+        const nb = n.neighborhood("node").filter(x => old[x.id()]).first();
+        const p = nb.nonempty() ? old[nb.id()] : { x: 0, y: 0 };
+        n.position({ x: p.x + (Math.random() - 0.5) * 120, y: p.y + (Math.random() - 0.5) * 120 });
+      });
+      cy.layout(layoutOpts(false)).run();
+    } else {
+      cy.layout(layoutOpts(true)).run();
+    }
+  }
+
+  function renderLegend(m) {
+    const present = new Set([...m.nodes.values()].map(n => KINDS[n.kind] ? n.kind : "_default"));
+    const order = ["event", "venue", "supplier", "sponsor", "volunteer", "community", "_default"];
+    document.getElementById("legend").innerHTML =
+      order.filter(k => present.has(k) || k !== "_default").map(k =>
+        `<div class="row"><span class="dot" style="background:${KINDS[k].color};${present.has(k) ? "" : "opacity:.35"}"></span>${KINDS[k].label}</div>`
+      ).join("") + `<div class="hint">size = times reused · ◆ = event</div>`;
+  }
+
+  function renderHeader(m, loaded) {
+    document.getElementById("n-ent").textContent = m.nodes.size;
+    document.getElementById("n-rel").textContent = m.edges.length;
+    document.getElementById("n-evt").textContent = [...m.nodes.values()].filter(n => n.kind === "event").length;
+    const b = document.getElementById("src-badge");
+    b.className = "badge " + loaded.source;
+    b.textContent = loaded.source === "live" ? "live" : loaded.source === "file" ? "file" : "snapshot";
+    document.getElementById("src-detail").textContent = loaded.detail;
+    b.title = (loaded.errors || []).join("\n");
+  }
+
+  // ---------- highlighting ----------
+  function stopPulse() { if (pulseTimer) { clearInterval(pulseTimer); pulseTimer = null; } cy && cy.nodes().removeClass("pulse"); }
+  function clearHighlight() {
+    stopPulse();
+    cy.elements().removeClass("dim hl focus");
+    cy.nodes().unselect();
+  }
+  function highlight(coll, focusIds, pulse) {
+    clearHighlight();
+    cy.elements().addClass("dim");
+    coll.removeClass("dim").addClass("hl");
+    if (focusIds) cy.nodes().filter(n => focusIds.has(n.id())).addClass("focus");
+    if (pulse) {
+      const target = cy.nodes().filter(n => focusIds.has(n.id()));
+      let on = false;
+      pulseTimer = setInterval(() => { on = !on; on ? target.addClass("pulse") : target.removeClass("pulse"); }, 550);
+    }
+  }
+  function focusNode(id) {
+    const n = cy.getElementById(id);
+    highlight(n.closedNeighborhood(), new Set([id]), false);
+  }
+  function latestEvent() {
+    const evs = [...model.nodes.values()].filter(n => n.kind === "event");
+    if (!evs.length) return null;
+    const t = n => { const s = n.created_at || n.attrs.date; const v = s ? Date.parse(s) : NaN; return isNaN(v) ? null : v; };
+    if (evs.some(n => t(n) != null)) return evs.reduce((a, b) => ((t(b) ?? -Infinity) > (t(a) ?? -Infinity) || ((t(b) ?? -1) === (t(a) ?? -1) && b.order > a.order)) ? b : a);
+    return evs[evs.length - 1];
+  }
+  function highlightLatest() {
+    const ev = latestEvent();
+    if (!ev) { toast("No event nodes yet"); return; }
+    const n = cy.getElementById(ev.id);
+    const coll = n.closedNeighborhood();
+    highlight(coll, new Set([ev.id]), true);
+    cy.animate({ fit: { eles: coll, padding: 140 }, duration: 600 });
+    showNode(ev.id);
+    const reused = n.neighborhood("node").filter(x => x.data("kind") !== "community" && x.data("kind") !== "event" &&
+      (model.nodes.get(x.id()).times_used || 0) > 1).map(x => x.data("label"));
+    toast(reused.length ? `${ev.name} reuses ${reused.length} from past events: ${reused.join(", ")}` : `Latest event: ${ev.name}`);
+  }
+  function highlightNew(ids) {
+    const coll = cy.nodes().filter(n => ids.has(n.id()));
+    coll.addClass("isnew");
+    const area = coll.closedNeighborhood();
+    highlight(area, ids, true);
+    setTimeout(() => cy.animate({ fit: { eles: area, padding: 140 }, duration: 600 }), 750);
+    toast(`${ids.size} new node${ids.size === 1 ? "" : "s"} since last refresh`);
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg; t.classList.add("show");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 4200);
+  }
+
+  // ---------- side panel ----------
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const fmtVal = v => v == null ? "—" : typeof v === "object" ? JSON.stringify(v) : String(v);
+
+  function showEmpty() {
+    document.getElementById("panel").innerHTML = `<div class="empty">
+      <p><b>Click any node</b> to see what the community remembers about it.</p>
+      <p>Node size = how many events reused it. The big nodes are what every new organiser inherits.</p></div>`;
+  }
+
+  function showNode(id) {
+    const n = model.nodes.get(id);
+    if (!n) return;
+    const ki = kindInfo(n.kind);
+    const byRel = new Map();
+    const events = new Map();
+    for (const e of model.edges) {
+      if (e.source !== id && e.target !== id) continue;
+      const otherId = e.source === id ? e.target : e.source;
+      const other = model.nodes.get(otherId);
+      const label = e.source === id ? e.relation.replace(/_/g, " ") : (INCOMING[e.relation] || e.relation.replace(/_/g, " ") + " (incoming)");
+      if (!byRel.has(label)) byRel.set(label, []);
+      byRel.get(label).push(other);
+      if (other && other.kind === "event") events.set(other.id, other);
+      if (e.event_id && model.nodes.has(e.event_id) && e.event_id !== id) events.set(e.event_id, model.nodes.get(e.event_id));
+    }
+    const mems = model.memories.filter(m => m.entity_id === id || (n.kind === "event" && m.event_id === id));
+    const attrs = Object.entries(n.attrs).filter(([k]) => k !== "seeded");
+    const link = o => `<li class="link" data-id="${esc(o.id)}"><span class="dot" style="background:${kindInfo(o.kind).color}"></span>${esc(o.name)}</li>`;
+    const evName = eid => model.nodes.has(eid) ? model.nodes.get(eid).name : eid;
+    document.getElementById("panel").innerHTML = `
+      <h2>${esc(n.name)}</h2>
+      <span class="kindtag"><span class="dot" style="background:${ki.color}"></span>${esc(n.kind)}</span>
+      <div class="tags">
+        ${n.seeded ? `<span class="tag seeded">seeded example</span>` : ""}
+        ${newIds.has(id) ? `<span class="tag new">new since refresh</span>` : ""}
+        ${n.created_at ? `<span class="tag">${esc(String(n.created_at).slice(0, 10))}</span>` : ""}
+      </div>
+      ${n.kind !== "event" ? `<h3>Times used</h3><div class="big">${n.times_used}<small>event${n.times_used === 1 ? "" : "s"}</small></div>` : ""}
+      ${attrs.length ? `<h3>Attributes</h3><dl>${attrs.map(([k, v]) => `<dt>${esc(k.replace(/_/g, " "))}</dt><dd>${esc(fmtVal(v))}</dd>`).join("")}</dl>` : ""}
+      ${n.kind !== "event" && events.size ? `<h3>Linked events (${events.size})</h3><ul>${[...events.values()].map(link).join("")}</ul>` : ""}
+      ${byRel.size ? `<h3>Connections</h3>${[...byRel.entries()].map(([rel, os]) =>
+          `<div class="rel">${esc(rel.replace(/_/g, " "))}</div><ul>${os.filter(Boolean).map(link).join("")}</ul>`).join("")}` : ""}
+      ${mems.length ? `<h3>What we remember</h3><ul>${mems.map(m =>
+          `<li class="mem">${esc(m.text)}${m.event_id ? `<div class="prov">from ${esc(evName(m.event_id))}</div>` : ""}</li>`).join("")}</ul>` : ""}
+      <h3>ID</h3><div style="color:var(--muted);font-size:13px;word-break:break-all">${esc(n.id)}</div>`;
+    document.querySelectorAll("#panel li.link").forEach(li => li.addEventListener("click", () => {
+      const tid = li.dataset.id; showNode(tid); focusNode(tid);
+      cy.animate({ center: { eles: cy.getElementById(tid) }, duration: 400 });
+    }));
+  }
+
+  // ---------- lifecycle ----------
+  async function load(isRefresh) {
+    const btn = document.getElementById("btn-refresh");
+    btn.disabled = true; btn.textContent = "Loading…";
+    try {
+      const loaded = await loadData();
+      model = normalise(loaded.raw);
+      const ids = new Set(model.nodes.keys());
+      newIds = prevIds ? new Set([...ids].filter(x => !prevIds.has(x))) : new Set();
+      render(model, isRefresh);
+      renderLegend(model);
+      renderHeader(model, loaded);
+      showEmpty();
+      if (isRefresh) {
+        if (newIds.size) cy.one("layoutstop", () => highlightNew(newIds));
+        else toast("Refreshed: no new nodes");
+      }
+      prevIds = ids;
+    } catch (e) {
+      console.error(e);
+      document.getElementById("panel").innerHTML = `<div class="err">Failed to load graph: ${esc(e.message)}</div>`;
+    } finally {
+      btn.disabled = false; btn.textContent = "Refresh";
+    }
+  }
+
+  document.getElementById("btn-latest").addEventListener("click", highlightLatest);
+  document.getElementById("btn-reset").addEventListener("click", () => { clearHighlight(); cy.nodes().removeClass("isnew"); showEmpty(); cy.animate({ fit: { padding: 70 }, duration: 500 }); });
+  document.getElementById("btn-refresh").addEventListener("click", () => load(true));
+  window.addEventListener("keydown", e => {
+    if (e.target.tagName === "INPUT") return;
+    if (e.key === "l") highlightLatest();
+    if (e.key === "r") load(true);
+    if (e.key === "Escape") { clearHighlight(); showEmpty(); }
+  });
+
+  if (typeof cytoscape === "undefined") {
+    document.getElementById("panel").innerHTML = `<div class="err">Cytoscape failed to load from cdnjs (offline?).</div>`;
+  } else {
+    load(false);
+  }
+})();
+</script>
+</body>
+</html>
