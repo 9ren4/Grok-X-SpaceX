@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Event Autopilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b1310; --panel:#111c17; --panel-2:#16241e; --line:#23352c;
+  --text:#eef3ee; --muted:#93a59a; --lime:#c8f560; --lime-ink:#14200f; --coral:#ff8a65; --sky:#5cc8ff; --warn:#ffcf5c;
+  --r:16px; --font:"Inter",system-ui,sans-serif; --display:"Space Grotesk","Inter",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 var(--font);
+  background-image:radial-gradient(circle at 85% -10%,#1f3a1a 0,transparent 45%),linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:auto,48px 48px,48px 48px;background-attachment:fixed}
+body::before{content:"";position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 0,var(--bg) 75%);pointer-events:none;z-index:0}
+a{color:var(--lime)}
+header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:16px;padding:14px 24px;border-bottom:1px solid var(--line);background:rgba(11,19,16,.85);backdrop-filter:blur(8px)}
+.brand{display:flex;align-items:center;gap:10px;font:700 18px var(--display);letter-spacing:.2px}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 4px #c8f56022}
+.pills{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.pill{font-size:12px;padding:3px 10px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.pill.on{color:var(--lime);border-color:#c8f56055}
+main{position:relative;z-index:1}
+
+/* hero */
+.hero{max-width:760px;margin:12vh auto 0;padding:0 20px;text-align:center}
+.hero h1{font:700 clamp(36px,6vw,60px)/1.05 var(--display);margin:0 0 14px;letter-spacing:-1px}
+.hero h1 span{color:var(--lime)}
+.hero p{color:var(--muted);font-size:17px;margin:0 0 28px}
+.composer{display:flex;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:8px;box-shadow:0 20px 60px #0008}
+.composer textarea{flex:1;resize:none;border:0;outline:0;background:transparent;color:var(--text);font:16px/1.5 var(--font);padding:10px 12px;min-height:48px;max-height:160px}
+.composer button{border:0;border-radius:12px;background:var(--lime);color:var(--lime-ink);font:700 15px var(--font);padding:0 22px;cursor:pointer}
+.composer button:disabled{opacity:.5;cursor:wait}
+.chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:99px;padding:6px 14px;font-size:13px;cursor:pointer}
+.chip:hover{color:var(--text);border-color:#c8f56066}
+
+/* workspace */
+.work{display:none;grid-template-columns:minmax(320px,400px) 1fr;gap:20px;padding:20px 24px;max-width:1500px;margin:0 auto}
+body.running .hero,body.done .hero{display:none}
+body.running .work,body.done .work{display:grid}
+.chat{display:flex;flex-direction:column;gap:12px;position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px)}
+.thread{overflow:auto;display:flex;flex-direction:column;gap:12px;padding-right:4px}
+.msg{padding:12px 14px;border-radius:14px;max-width:100%;white-space:pre-wrap}
+.msg.user{align-self:flex-end;background:var(--lime);color:var(--lime-ink);font-weight:500;border-bottom-right-radius:4px}
+.msg.bot{background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:4px}
+.who{font:600 12px var(--font);color:var(--muted);margin-bottom:6px;letter-spacing:.4px;text-transform:uppercase}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;white-space:normal}
+.steps li{display:flex;gap:10px;align-items:center;color:var(--muted)}
+.steps li.done{color:var(--text)}
+.steps .ic{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center;font-size:11px}
+.steps li.done .ic{background:var(--lime);border-color:var(--lime);color:var(--lime-ink)}
+.steps li.active .ic{border-color:var(--lime);border-top-color:transparent;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.steps small{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
+details.raw{margin-top:8px;color:var(--muted);font-size:12px}
+details.raw pre{white-space:pre-wrap;max-height:180px;overflow:auto;margin:6px 0 0}
+.chat .composer{box-shadow:none}
+
+/* results */
+.results{min-width:0}
+.tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:10px;padding:8px 14px;cursor:pointer;font:600 14px var(--font)}
+.tab.on{background:var(--lime);color:var(--lime-ink);border-color:var(--lime)}
+.pane{display:none}.pane.on{display:block}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;min-width:0}
+.card h3{margin:0 0 12px;font:600 13px var(--font);color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
+.big{font:700 56px/1 var(--display);color:var(--lime);letter-spacing:-1px}
+.big small{font-size:20px;color:var(--text);margin-left:6px}
+.sub{color:var(--muted);margin-top:8px}
+.c4{grid-column:span 4}.c5{grid-column:span 5}.c6{grid-column:span 6}.c7{grid-column:span 7}.c8{grid-column:span 8}.c12{grid-column:span 12}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:12px;padding:10px 16px;font-weight:600;text-decoration:none;border:1px solid var(--line);color:var(--text);background:var(--panel-2)}
+.btn.primary{background:var(--lime);color:var(--lime-ink);border-color:var(--lime)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.visual img{width:100%;border-radius:12px;display:block;border:1px solid var(--line)}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:120px 1fr 48px;gap:10px;align-items:center;font-size:13px}
+.bar .track{height:8px;background:var(--panel-2);border-radius:99px;overflow:hidden}
+.bar .fill{height:100%;background:var(--lime);border-radius:99px}
+.bar b{text-align:right;font-variant-numeric:tabular-nums}
+.callout{border-left:3px solid var(--warn);background:#ffcf5c12;padding:10px 14px;border-radius:8px;margin-bottom:14px}
+.callout b{color:var(--warn)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.src{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--panel-2);color:var(--muted);white-space:nowrap}
+.src.mem{color:var(--lime);background:#c8f5601a}
+.copy{white-space:pre-wrap;background:var(--panel-2);border-radius:12px;padding:14px;font-size:14px;max-height:420px;overflow:auto}
+.copyhead{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.copyhead h3{margin:0}
+.copyhead .tier{margin-left:auto}
+.small-btn{border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer}
+iframe.news{width:100%;height:520px;border:0;border-radius:12px;background:#fff}
+iframe.graph{width:100%;height:calc(100vh - 170px);min-height:520px;border:1px solid var(--line);border-radius:var(--r);background:#0b0f14}
+.mem li{margin-bottom:8px}.mem li span{color:var(--muted);font-size:13px}
+.empty{color:var(--muted);font-style:italic}
+@media (max-width:980px){
+  .work{grid-template-columns:1fr;padding:16px}
+  .chat{position:static;max-height:none}
+  .c4,.c5,.c6,.c7,.c8{grid-column:span 12}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><span class="dot"></span>Event Autopilot</div>
+  <div class="pills" id="pills"></div>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>One line in.<br><span>The whole event out.</span></h1>
+    <p>Tell me about your event, or paste a Luma link. I'll plan the run sheet, budget and rota from your community's past events, write the posts and newsletter, make the visual and build the Notion page for you to approve.</p>
+    <form class="composer" id="heroForm">
+      <textarea id="heroInput" rows="1" placeholder="e.g. AI x Climate meetup, 14 Nov, ~60 people, pizza" autofocus></textarea>
+      <button type="submit">Plan it</button>
+    </form>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <section class="work">
+    <aside class="chat">
+      <div class="thread" id="thread"></div>
+      <form class="composer" id="chatForm">
+        <textarea id="chatInput" rows="1" placeholder="Another event, or a Luma link…"></textarea>
+        <button type="submit">Run</button>
+      </form>
+    </aside>
+
+    <div class="results" id="results">
+      <div class="tabs" id="tabs"></div>
+      <div id="panes"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const h = (tag, attrs = {}, ...kids) => {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (v !== false && v != null) el.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) el.append(k.nodeType ? k : document.createTextNode(String(k)));
+  return el;
+};
+const money = (x, cur = "GBP") => (cur === "GBP" ? "£" : cur + " ") + Number(x || 0).toFixed(2);
+
+const EXAMPLES = [
+  "AI x Climate meetup, 14 Nov, ~60 people, pizza",
+  "Founders breakfast next Friday, 30 people, coffee and pastries",
+  "Weekend hackathon for 120 students, 2 days, sponsors needed",
+];
+for (const ex of EXAMPLES) $("#chips").append(h("button", { class: "chip", type: "button", onclick: () => start(ex) }, ex));
+
+// ---- status pills
+fetch("/api/status").then(r => r.json()).then(s => {
+  const names = { grok: "Grok", notion: "Notion", supabase: "Supabase", ghost: "Ghost", luma: "Luma" };
+  for (const [k, label] of Object.entries(names))
+    $("#pills").append(h("span", { class: "pill" + (s[k] ? " on" : ""), title: s[k] ? "connected" : "not configured: fallback in use" }, (s[k] ? "● " : "○ ") + label));
+}).catch(() => {});
+
+// ---- steps the assistant shows while the pipeline runs
+const STEPS = [
+  ["read", "Reading your idea", /start:/],
+  ["fetch", "Getting the event details", /luma|fetch|parse|extract/i],
+  ["recall", "Recalling your community's past events", /memory|recall/i],
+  ["plan", "Planning run sheet, budget and rota", /plan:/i],
+  ["copy", "Writing the posts and newsletter", /copy:/i],
+  ["learn", "Saving what this event taught us", /remember:|nothing learned/i],
+  ["visual", "Rendering the event visual", /visual:|visuals\.render/i],
+  ["notion", "Building the Notion page for approval", /notion:|publish:/i],
+  ["graph", "Updating the knowledge graph", /graph:/i],
+];
+
+function autosize(t) { t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 160) + "px"; }
+for (const t of document.querySelectorAll("textarea")) {
+  t.addEventListener("input", () => autosize(t));
+  t.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); t.form.requestSubmit(); } });
+}
+$("#heroForm").addEventListener("submit", e => { e.preventDefault(); start($("#heroInput").value); });
+$("#chatForm").addEventListener("submit", e => { e.preventDefault(); start($("#chatInput").value); });
+
+let running = false;
+async function start(text) {
+  text = (text || "").trim();
+  if (!text || running) return;
+  running = true;
+  document.body.className = "running";
+  for (const b of document.querySelectorAll(".composer button")) b.disabled = true;
+  $("#chatInput").value = ""; autosize($("#chatInput"));
+
+  const thread = $("#thread");
+  thread.append(h("div", { class: "msg user" }, text));
+  const list = h("ul", { class: "steps" });
+  const rows = {};
+  for (const [id, label] of STEPS) {
+    rows[id] = h("li", {}, h("span", { class: "ic" }), h("span", {}, label), h("small"));
+    list.append(rows[id]);
+  }
+  const rawPre = h("pre");
+  const bot = h("div", { class: "msg bot" }, h("div", { class: "who" }, "Autopilot"), list,
+    h("details", { class: "raw" }, h("summary", {}, "Show run log"), rawPre));
+  thread.append(bot);
+  thread.scrollTop = thread.scrollHeight;
+  rows.read.classList.add("active");
+  showSkeleton();
+
+  const t0 = performance.now();
+  let current = "read";
+  const mark = (id, line) => {
+    const order = STEPS.map(s => s[0]);
+    for (const s of order.slice(0, order.indexOf(id))) {
+      if (!rows[s].classList.contains("done")) { rows[s].classList.remove("active"); rows[s].classList.add("done"); $(".ic", rows[s]).textContent = "✓"; }
+    }
+    rows[id].classList.add("active");
+    current = id;
+  };
+
+  try {
+    const res = await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text }) });
+    if (!res.ok) throw new Error((await res.json()).error || res.statusText);
+    const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, i); buf = buf.slice(i + 1);
+        if (!line.trim()) continue;
+        const ev = JSON.parse(line);
+        if (ev.type === "log") {
+          rawPre.textContent += ev.line + "\n";
+          const hit = STEPS.find(([, , re]) => re.test(ev.line));
+          if (hit) { mark(hit[0]); $("small", rows[hit[0]]).textContent = ((performance.now() - t0) / 1000).toFixed(0) + "s"; }
+        } else if (ev.type === "result") {
+          for (const id in rows) { rows[id].classList.remove("active"); rows[id].classList.add("done"); $(".ic", rows[id]).textContent = "✓"; }
+          const secs = ((performance.now() - t0) / 1000).toFixed(0);
+          bot.append(h("div", { style: "margin-top:12px;white-space:pre-wrap" }, summary(ev.result, ev.links, secs)));
+          render(ev.result, ev.links);
+        } else if (ev.type === "error") {
+          throw new Error(ev.error);
+        }
+      }
+    }
+    document.body.className = "done";
+  } catch (err) {
+    rows[current].classList.remove("active");
+    bot.append(h("div", { style: "margin-top:10px;color:var(--coral)" }, "Something went wrong: " + err.message));
+    document.body.className = "done";
+  } finally {
+    running = false;
+    for (const b of document.querySelectorAll(".composer button")) b.disabled = false;
+    thread.scrollTop = thread.scrollHeight;
+  }
+}
+
+function summary(r, links, secs) {
+  const s = r.spec, st = r.memory_stats || {};
+  const parts = [`Done in ${secs}s. "${s.title}" is planned and waiting for your approval in ${links.notion ? "Notion" : "the draft page"}.`];
+  if (st.rota_total) parts.push(`${st.rota_filled}/${st.rota_total} shifts and ${st.budget_from_memory}/${st.budget_total} budget lines came from your past events.`);
+  if (s.missing?.length) parts.push(`I still need: ${s.missing.join(", ")}.`);
+  parts.push(`That's about ${r.hours_saved} h of volunteer admin saved.`);
+  return parts.join("\n\n");
+}
+
+// ---- results
+const TABS = [["overview", "Overview"], ["copy", "Posts & newsletter"], ["plan", "Run sheet, budget & rota"], ["graph", "Knowledge graph"]];
+function setTab(id) {
+  for (const t of document.querySelectorAll(".tab")) t.classList.toggle("on", t.dataset.id === id);
+  for (const p of document.querySelectorAll(".pane")) p.classList.toggle("on", p.dataset.id === id);
+  const g = $("iframe.graph");
+  if (id === "graph" && g && !g.src) {  // load only once visible, so the layout gets a real size
+    g.onload = () => setTimeout(() => {
+      try { g.contentWindow.document.dispatchEvent(new KeyboardEvent("keydown", { key: "l", bubbles: true })); } catch {}
+    }, 1200);
+    g.src = g.dataset.src;
+  }
+}
+const md = text => (text || "—").split(/(\*\*[^*]+\*\*)/g).map(part =>
+  /^\*\*[^*]+\*\*$/.test(part) ? h("strong", {}, part.slice(2, -2)) : part);
+function showSkeleton() {
+  $("#tabs").replaceChildren(); $("#panes").replaceChildren(
+    h("div", { class: "card", style: "padding:40px;text-align:center;color:var(--muted)" }, "Working on it… results appear here."));
+}
+
+function render(r, links) {
+  const s = r.spec, a = r.artifacts;
+  $("#tabs").replaceChildren(...TABS.map(([id, label]) => h("button", { class: "tab", "data-id": id, onclick: () => setTab(id) }, label)));
+  const pane = (id, ...kids) => h("div", { class: "pane", "data-id": id }, ...kids);
+
+  // overview
+  const when = s.date ? new Date(s.date).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }) + (s.start ? " · " + s.start : "") : "date TBC";
+  const hb = r.hours_breakdown || {};
+  const maxH = Math.max(0.01, ...Object.values(hb));
+  const nice = { run_sheet: "Run sheet", budget: "Budget", rota: "Volunteer rota", page_copy: "Event page", visual: "Visual", newsletter: "Newsletter", posts: "Channel posts" };
+  const overview = pane("overview",
+    s.missing?.length ? h("div", { class: "callout" }, h("b", {}, "Needs you: "), s.missing.join(" · ")) : null,
+    h("div", { class: "grid" },
+      h("div", { class: "card c5" }, h("h3", {}, "Volunteer time saved"),
+        h("div", { class: "big" }, String(r.hours_saved), h("small", {}, "hours")),
+        h("div", { class: "sub" }, "on this event, versus doing it by hand"),
+        h("div", { class: "bars", style: "margin-top:18px" },
+          Object.entries(hb).map(([k, v]) => h("div", { class: "bar" }, h("span", {}, nice[k] || k),
+            h("div", { class: "track" }, h("div", { class: "fill", style: `width:${(v / maxH) * 100}%` })), h("b", {}, v + "h"))))),
+      h("div", { class: "card c7" }, h("h3", {}, "The event"),
+        h("div", { style: "font:700 28px/1.15 var(--display);margin-bottom:6px" }, s.title),
+        h("div", { class: "sub", style: "margin:0 0 16px" }, [when, s.venue?.name || "venue TBC", (s.expected_attendees || "?") + " people", s.ticket_price ? money(s.ticket_price, s.currency) : "Free"].join("  ·  ")),
+        h("div", { class: "btns" },
+          links.notion ? h("a", { class: "btn primary", href: links.notion, target: "_blank" }, "Open in Notion to approve ↗") :
+            links.notion_md ? h("a", { class: "btn", href: links.notion_md, target: "_blank" }, "Notion draft (offline) ↗") : null,
+          links.ghost ? h("a", { class: "btn", href: links.ghost, target: "_blank" }, "Ghost draft ↗") : null,
+          links.newsletter ? h("a", { class: "btn", href: links.newsletter, target: "_blank" }, "Newsletter preview ↗") : null,
+          h("button", { class: "btn", onclick: () => setTab("graph") }, "See the knowledge graph")),
+        h("div", { class: "sub", style: "margin-top:16px" }, `Budget ${money(r.spec.budget.reduce((t, i) => t + i.qty * i.unit_cost, 0), s.currency)} · ${s.run_sheet.length} run-sheet slots · ${s.rota.length} shifts`)),
+      h("div", { class: "card c7 visual" }, h("h3", {}, "Visual (from code template)"),
+        links.visual ? h("img", { src: links.visual + "?t=" + Date.now(), alt: "Event visual" }) : h("div", { class: "empty" }, "No visual rendered.")),
+      h("div", { class: "card c5" }, h("h3", {}, "What we reused from past events"),
+        r.memories_used?.length ? h("ul", { class: "mem", style: "padding-left:18px;margin:0" },
+          r.memories_used.slice(0, 7).map(m => h("li", {}, m.text, h("br"), h("span", {}, "from " + (m.provenance || "past events")))))
+          : h("div", { class: "empty" }, "No past events matched yet.")),
+      links.banner ? h("div", { class: "card c12 visual" }, h("h3", {}, "LinkedIn banner"), h("img", { src: links.banner + "?t=" + Date.now(), alt: "LinkedIn banner" })) : null,
+    ));
+
+  // copy
+  const tiers = {};
+  for (const ln of r.log) { const m = ln.match(/copy: tiers (\{.*\})/); if (m) try { Object.assign(tiers, JSON.parse(m[1].replace(/'/g, '"'))); } catch {} }
+  const copyCard = (title, key, text, cls = "c6") => h("div", { class: "card " + cls },
+    h("div", { class: "copyhead" }, h("h3", {}, title),
+      h("span", { class: "src tier" + (tiers[key] === "grok" || tiers[key] === "grokbot" ? " mem" : "") }, tiers[key] === "grok" || tiers[key] === "grokbot" ? "written by Grok" : "template"),
+      h("button", { class: "small-btn", onclick: e => { navigator.clipboard?.writeText(text); e.target.textContent = "Copied"; } }, "Copy")),
+    h("div", { class: "copy" }, md(text)));
+  const news = h("iframe", { class: "news", sandbox: "" });
+  news.srcdoc = `<div style="font:16px/1.6 Georgia,serif;max-width:620px;margin:24px auto;color:#1a1a1a;padding:0 16px"><div style="font:600 12px Inter,sans-serif;color:#888;text-transform:uppercase;letter-spacing:.5px">Subject</div><h1 style="font:700 24px Inter,sans-serif;margin:4px 0 20px">${(a.newsletter_subject || "").replace(/</g, "&lt;")}</h1>${a.newsletter_html || ""}</div>`;
+  const copy = pane("copy", h("div", { class: "grid" },
+    copyCard("WhatsApp group", "whatsapp", a.whatsapp),
+    copyCard("LinkedIn", "linkedin", a.linkedin),
+    copyCard("Event page", "page_copy", a.page_copy, "c12"),
+    h("div", { class: "card c12" }, h("div", { class: "copyhead" }, h("h3", {}, "Newsletter"),
+      h("span", { class: "src tier mem" }, tiers.newsletter_html === "template" ? "template" : "written by Grok")), news)));
+
+  // plan
+  const tbl = (head, rows, numCols = []) => h("table", {},
+    h("thead", {}, h("tr", {}, head.map(x => h("th", {}, x)))),
+    h("tbody", {}, rows.map(r => h("tr", {}, r.map((c, i) => h("td", { class: numCols.includes(i) ? "num" : "" }, c))))));
+  const srcTag = src => h("span", { class: "src" + (src?.startsWith("memory") ? " mem" : "") }, src || "estimate");
+  const total = s.budget.reduce((t, i) => t + i.qty * i.unit_cost, 0);
+  const plan = pane("plan", h("div", { class: "grid" },
+    h("div", { class: "card c6" }, h("h3", {}, "Run sheet"),
+      tbl(["Time", "Mins", "Item", "Owner"], s.run_sheet.map(x => [x.time, x.duration_min, x.item, x.owner || "—"]), [1])),
+    h("div", { class: "card c6" }, h("h3", {}, "Volunteer rota"),
+      tbl(["Role", "Volunteer", "Start", "End"], s.rota.map(x => [x.role, x.volunteer || "⚠️ unfilled", x.start, x.end]))),
+    h("div", { class: "card c12" }, h("h3", {}, `Budget · ${money(total, s.currency)} · ${money(total / (s.expected_attendees || 1), s.currency)} per head`),
+      tbl(["Item", "Qty", "Unit", "Total", "Where the number came from"],
+        s.budget.map(x => [x.label, x.qty, money(x.unit_cost, x.currency), money(x.qty * x.unit_cost, x.currency), srcTag(x.source)]), [1, 2, 3]))));
+
+  // graph
+  const graph = pane("graph", h("iframe", { class: "graph", "data-src": links.graph + "?t=" + Date.now() }));
+
+  $("#panes").replaceChildren(overview, copy, plan, graph);
+  setTab("overview");
+}
+</script>
+</body>
+</html>
