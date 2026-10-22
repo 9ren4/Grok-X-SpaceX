@@ -1,7 +1,10 @@
 # Event Autopilot: Architecture & Decision Log
 
+> ⚠️ **Memory layer superseded.** §4 (Cognee) is out of date — the knowledge base is now
+> Supabase Postgres. See [KNOWLEDGE-BASE.md](./KNOWLEDGE-BASE.md). Everything else here stands.
+
 > Track 3: Run Sheet, Promo & Newsletter
-> Team: 2 people · License: MIT · Memory: Cognee · LLM: Grok
+> Team: 2 people · License: MIT · Memory: Supabase · LLM: Grok
 
 **One-liner:** A lead types one line ("AI x Climate meetup, 14 Nov, ~60 people, pizza"). The system builds a run sheet, budget, volunteer rota, on-brand visuals, a Ghost newsletter draft, and WhatsApp, LinkedIn and Discord posts. Everything lands in Notion as an approval card, and the lead clicks **Approve**. Cognee remembers the community's voice, venues, suppliers, volunteers and every edit the lead makes, so each week needs less editing.
 
