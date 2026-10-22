@@ -422,8 +422,10 @@ def _templates(s: EventSpec, mems: list[Memory] | None = None) -> dict[str, str]
 # ---------- Grok tier ----------
 
 SYSTEM = ("You are the copywriter for a community events team. Write warm, specific, concise copy in the "
-          "community's voice. Do not invent facts (speakers, prices, sponsors, times) that are absent from "
-          "the Event or Community memory sections.")
+          "community's voice for people deciding whether to attend. Do not invent facts (speakers, prices, "
+          "sponsors, times, links) that are absent from the Event section. Community memory is the "
+          "organisers' private planning notes: never repeat costs, budgets, per-head figures, quantities "
+          "ordered, dietary ratios, supplier prices or volunteer staffing to attendees.")
 
 
 def _prompt(s: EventSpec, mems: list[Memory]) -> str:
@@ -431,26 +433,49 @@ def _prompt(s: EventSpec, mems: list[Memory]) -> str:
                                        "expected_attendees", "audience", "format", "hosts", "ticket_price",
                                        "currency", "luma_url"}, indent=1)
     mem = "\n".join(f"- {m.text} — from {m.provenance or 'past events'}" for m in mems) or "(none)"
+    link = s.luma_url
+    cta = (f"exactly one call-to-action link to {link}" if link
+           else "no links at all; say sign-up details are coming soon")
     return f"""## Event
 {event}
 
-## Community memory
+## Community memory (organisers only: background for tone and context, never quote figures from it)
 {mem}
 
 ## Task
 Return JSON with keys page_copy, newsletter_subject, newsletter_html, linkedin, whatsapp.
 - page_copy: 120-180 words, never end a sentence with '...', Markdown, lead with the hook, include date, venue and price.
 - newsletter_subject: under 60 characters.
-- newsletter_html: simple <p>, <h2>, <ul> only, exactly one call-to-action link to {s.luma_url or '(no link available)'}.
+- newsletter_html: simple <p>, <h2>, <ul> only, {cta}.
 - linkedin: at most 1300 characters, at most 3 hashtags.
-- whatsapp: at most 600 characters, casual, emoji ok, ends with the link {s.luma_url or ''}.
-Use only facts in Event or Community memory. Do not invent speakers or prices."""
+- whatsapp: at most 600 characters, casual, emoji ok, {f"ends with the link {link}" if link else "no links"}.
+Write for attendees: what it is, who it's for, when, where, price, why come.
+Never include any URL other than {link or "(none: include no URLs)"}. Never mention costs per head, budgets,
+amounts ordered, dietary percentages, supplier prices or how many volunteers there are."""
+
+
+_URL = re.compile(r"(?:https?://|www\.)[^\s<>\"')]+|\b[\w-]+\.(?:com|io|co|org|net|ma)/[^\s<>\"')]*", re.I)
+_LEAK = re.compile(r"per[\s-]head|/\s*head\b|\bbudget\b|\ball[\s-]in\b|\d+\s*%|"
+                   r"\b\d+\s+(?:pizzas|volunteers)\b|\b(?:two|three|four|five|six)\s+volunteers\b", re.I)
+
+
+def _leaks(t: str, s: EventSpec) -> bool:
+    """Planning notes or invented links that must not reach attendees."""
+    allowed = s.luma_url.lower().removeprefix("https://").removeprefix("http://").rstrip("/")
+    for u in _URL.findall(t):
+        bare = u.lower().removeprefix("https://").removeprefix("http://").rstrip("/.,")
+        if not allowed or not bare.startswith(allowed):
+            return True
+    if _LEAK.search(t):
+        return True
+    paid = bool(s.ticket_price)
+    return not paid and bool(re.search(r"(?:£|GBP\s?)\d", t))  # free event: any £ figure is a cost leak
 
 
 def _valid(name: str, text: str, s: EventSpec) -> bool:
     """Post-validate one Grok artifact; failures fall back to the template for that artifact."""
     t = (text or "").strip()
-    if not t:
+    if not t or _leaks(t, s):
         return False
     url = s.luma_url
     if name == "page_copy":
