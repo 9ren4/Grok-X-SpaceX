@@ -277,22 +277,38 @@ function askConsent() {
     "Before I plan it: can I save this event's venue, suppliers, sponsors and volunteers to your community's shared knowledge base (Supabase), so future events can reuse them? Images would be stored there too.",
     actions);
   const go = consent => {
+    if (!consentAnswer) return;  // already answered
+    consentAnswer = null;
+    for (const b of actions.querySelectorAll("button")) b.disabled = true;
     brief.store_consent = consent;
     actions.replaceChildren(h("span", { class: consent ? "ok" : "sub" }, consent ? "✓ Saving to the knowledge base" : "Not saving: this run only"));
+    $("#chatInput").placeholder = "Answer, or say skip…";
     start("", brief);
   };
   actions.append(
     h("button", { class: "small-btn", type: "button", onclick: () => go(true) }, "Yes, save it"),
     h("button", { class: "small-btn", type: "button", onclick: () => go(false) }, "No, just this once"));
+  consentAnswer = go;
   thread.append(msg); thread.scrollTop = thread.scrollHeight;
+  $("#chatInput").placeholder = "Type yes or no…";
 }
 
 // ---- intake interview: Grok asks about each section before anything is planned
-let history = [], brief = {}, interviewing = false;
+let history = [], brief = {}, interviewing = false, consentAnswer = null;
+const TOPICS_ALL = ["basics", "venue", "food", "sponsorship", "volunteers", "budget", "posts"];
 function resetInterview() { history = []; brief = {}; interviewing = false; }
 async function send(text) {
   text = (text || "").trim();
   if (!text || running) return;
+  if (consentAnswer) {  // waiting on "can I save this?": a typed yes/no answers it and starts the run
+    const thread = $("#thread");
+    thread.append(h("div", { class: "msg user" }, text));
+    $("#chatInput").value = "";
+    if (/^(y|yes|yeah|yep|sure|ok|okay|go|save|do it|please)/i.test(text)) return consentAnswer(true);
+    if (/^(n|no|nope|nah|don'?t|just this once)/i.test(text)) return consentAnswer(false);
+    thread.append(h("div", { class: "msg bot" }, h("div", { class: "who" }, "Autopilot"), "Just yes or no: shall I save this event to your knowledge base?"));
+    return;
+  }
   if (!interviewing) { resetInterview(); interviewing = true; }
   if (document.body.className !== "chatting") {
     document.body.className = "chatting";
@@ -323,7 +339,8 @@ async function send(text) {
     if (turn.options) msg.append(optionsCard(turn.options));
     if (turn.venue_match) msg.append(venueCard(turn.venue_match));
     else if (turn.venue_match === null) msg.append(h("div", { class: "sub" }, `Couldn't find "${brief.venue_name}" on the map; I'll keep the name as you said it.`));
-    if (turn.done) {
+    const allCovered = TOPICS_ALL.every(t => (brief.covered || []).includes(t));
+    if (turn.done || allCovered) {
       interviewing = false;
       askConsent();
     } else {
