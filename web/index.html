@@ -214,6 +214,34 @@ function venueCard(v) {
   return card;
 }
 
+// ---- the organiser wasn't sure: what we found, and ways to get the answer
+function helperCard(x) {
+  const status = h("div", { class: "actions" });
+  const out = h("div");
+  const field = x.topic === "venue" ? "venue_cost" : "food_cost";
+  const card = h("div", { class: "venue" }, h("div", { class: "vbody" },
+    h("b", {}, x.found ? "🔎 Found in your records" : "🔎 Not in your records yet"), x.summary,
+    x.seeded ? h("div", { class: "sub" }, "(from seeded example data)") : null, status, out));
+  if (x.suggest != null) status.append(h("button", { class: "small-btn", type: "button", onclick: () => {
+    brief[field] = x.suggest; out.replaceChildren(h("span", { class: "ok" }, `✓ Using £${x.suggest.toLocaleString()} (from past events)`)); } },
+    `Use £${x.suggest.toLocaleString()}`));
+  status.append(
+    h("a", { class: "small-btn", href: x.search_url, target: "_blank", style: "text-decoration:none" }, "Search online ↗"),
+    h("button", { class: "small-btn", type: "button", onclick: async e => {
+      e.target.disabled = true; out.replaceChildren(h("span", { class: "typing" }, "Drafting…"));
+      const r = await fetch("/api/draft", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: x.topic, brief, contact: x.contact }) });
+      const d = await r.json();
+      const mail = d.contact && d.contact.includes("@") ? "mailto:" + d.contact + "?subject=" + encodeURIComponent(d.subject) + "&body=" + encodeURIComponent(d.message) : "";
+      out.replaceChildren(h("div", { class: "copy", style: "margin-top:8px;font-size:13px" }, d.message),
+        h("div", { class: "actions" },
+          h("button", { class: "small-btn", type: "button", onclick: ev => { navigator.clipboard?.writeText(d.message); ev.target.textContent = "Copied"; } }, "Copy"),
+          mail ? h("a", { class: "small-btn", href: mail, style: "text-decoration:none" }, "Email " + d.contact) : null));
+    } }, `Message ${x.subject}`),
+    h("button", { class: "small-btn", type: "button", onclick: () => out.replaceChildren(h("span", { class: "sub" }, "OK, it'll be in \"Needs you\" on the plan.")) }, "I'll add it later"));
+  return card;
+}
+
 // ---- permission before anything is saved to the shared knowledge base
 function askConsent() {
   const thread = $("#thread");
@@ -264,6 +292,7 @@ async function send(text) {
     if (turn.luma) msg.append(h("div", { class: "venue" }, h("div", { class: "vbody" },
       h("b", {}, `📋 ${turn.luma.registered} registered on Luma`), turn.luma.title || "",
       h("div", { style: "margin-top:4px" }, h("a", { href: turn.luma.url, target: "_blank" }, "Open on Luma ↗")))));
+    if (turn.helper) msg.append(helperCard(turn.helper));
     if (turn.venue_match) msg.append(venueCard(turn.venue_match));
     else if (turn.venue_match === null) msg.append(h("div", { class: "sub" }, `Couldn't find "${brief.venue_name}" on the map; I'll keep the name as you said it.`));
     if (turn.done) {

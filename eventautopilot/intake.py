@@ -88,10 +88,16 @@ FALLBACK_Q = {
 }
 
 
-def step(history: list[dict], brief: Brief) -> Turn:
-    """history: [{"role": "user"|"assistant", "content": str}, ...] ending with the organiser's message."""
+def step(history: list[dict], brief: Brief, lookup: str = "") -> Turn:
+    """history: [{"role": "user"|"assistant", "content": str}, ...] ending with the organiser's message.
+    lookup: what the knowledge base said about the thing the organiser wasn't sure about."""
     convo = "\n".join(f"{m['role']}: {m['content']}" for m in history[-16:])
-    user = f"## Brief so far\n{brief.model_dump_json()}\n\n## Conversation\n{convo}\n\nReturn the next turn."
+    extra = (f"\n\n## Knowledge base lookup (the organiser wasn't sure)\n{lookup}\n"
+             "Start your reply with one short sentence saying what you found in the community's records, "
+             "or that you found nothing, and that options are below (search online, message the venue or "
+             "supplier, or add it later). Do NOT put any of these numbers into the brief yourself; the "
+             "organiser decides. Then ask the next question.") if lookup else ""
+    user = f"## Brief so far\n{brief.model_dump_json()}\n\n## Conversation\n{convo}{extra}\n\nReturn the next turn."
     parsed, _tier = llm.complete_json(SYSTEM, user, Turn, fast=True)
     if parsed is not None:
         parsed.brief.covered = [t for t in TOPICS if t in set(parsed.brief.covered) | set(brief.covered)]
@@ -159,6 +165,86 @@ def luma_registrations(url: str) -> dict | None:
                 "venue": geo.get("address") or "", "city": geo.get("city") or ""}
     except Exception:  # noqa: BLE001 — a convenience, never block the interview
         return None
+
+
+UNSURE = re.compile(r"(?i)\b(not sure|unsure|don'?t know|dunno|no idea|idk|tbc|not yet|no clue|haven'?t (?:checked|asked))\b")
+
+
+def current_topic(brief: Brief) -> str | None:
+    return next((t for t in TOPICS if t not in brief.covered), None)
+
+
+def _kb_node(kind: str, name: str) -> dict | None:
+    if not name:
+        return None
+    try:
+        from . import memory
+        nodes = memory.graph(limit=500).get("nodes", [])
+    except Exception:  # noqa: BLE001
+        return None
+    key = name.lower()
+    return next((n for n in nodes if n.get("kind") == kind and
+                 (key in n["name"].lower() or n["name"].lower() in key)), None)
+
+
+def help_unsure(topic: str, b: Brief) -> dict | None:
+    """The organiser doesn't know an answer: check the knowledge base and offer next steps."""
+    if topic == "venue":
+        subject, kind = b.venue_name, "venue"
+    elif topic == "food":
+        subject, kind = b.food_supplier or b.food, "supplier"
+    else:
+        return None
+    node = _kb_node(kind, subject)
+    a = (node or {}).get("attrs") or {}
+    facts, suggest = [], None
+    if node:
+        if a.get("hire_cost_gbp") is not None:
+            suggest = float(a["hire_cost_gbp"])
+            facts.append(f"hire cost £{suggest:,.0f} last time")
+        heads = b.attendees or b.luma_registered or 0
+        if a.get("price_per_head_gbp") and heads:
+            suggest = round(float(a["price_per_head_gbp"]) * heads, 2)
+            facts.append(f"£{a['price_per_head_gbp']}/head, about £{suggest:,.0f} for {heads} people")
+        elif a.get("price_per_pizza_gbp") and heads:
+            pizzas = -(-heads // 4)
+            suggest = round(float(a["price_per_pizza_gbp"]) * pizzas, 2)
+            facts.append(f"£{a['price_per_pizza_gbp']}/pizza, about {pizzas} pizzas ≈ £{suggest:,.0f} for {heads} people")
+        for k in ("capacity", "quirks", "contact"):
+            if a.get(k):
+                facts.append(f"{k}: {a[k]}")
+        if a.get("capacity") and heads and int(a["capacity"]) < heads:
+            facts.append(f"⚠️ holds {a['capacity']} but you're expecting {heads}")
+    found = f"Found {node['name']} in your community's records: " + "; ".join(facts) if node and facts else \
+        f"Nothing about {subject or 'this'} in your community's records yet."
+    q = f"{subject} {'hire cost' if topic == 'venue' else 'catering price'} {b.venue_city or 'London'}".strip()
+    return {"topic": topic, "subject": subject or ("the venue" if topic == "venue" else "the caterer"),
+            "found": bool(node and facts), "summary": found, "suggest": suggest,
+            "seeded": bool(a.get("seed")), "contact": a.get("contact", ""),
+            "search_url": "https://www.google.com/search?q=" + httpx.QueryParams({"q": q})["q"].replace(" ", "+")}
+
+
+class Draft(BaseModel):
+    subject: str
+    message: str
+
+
+def draft_message(topic: str, b: Brief, contact: str = "") -> Draft:
+    """A short message the organiser can send to the venue or caterer to get the missing answer."""
+    who = b.venue_name if topic == "venue" else (b.food_supplier or "the caterer")
+    ask = ("hire cost, availability and what AV is included" if topic == "venue"
+           else "a quote, lead time and dietary options")
+    facts = f"Event: {b.title or 'community event'}; when: {b.when or 'TBC'}; people: {b.attendees or b.luma_registered or 'TBC'}"
+    parsed, _ = llm.complete_json(
+        "Write a short, friendly message from a volunteer community organiser. Plain text, under 90 words, "
+        "no placeholders in square brackets, sign off as 'the organising team'.",
+        f"To: {who}. Ask for {ask}. {facts}.", Draft, fast=True)
+    if parsed:
+        return parsed
+    return Draft(subject=f"Enquiry: {b.title or 'community event'}",
+                 message=f"Hi {who},\n\nWe're planning {b.title or 'a community event'} ({b.when or 'date TBC'}, "
+                         f"about {b.attendees or b.luma_registered or 'TBC'} people). Could you let us know your "
+                         f"{ask}?\n\nThanks,\nthe organising team")
 
 
 def to_source(b: Brief) -> str:

@@ -102,13 +102,34 @@ def intake_turn(body: IntakeIn) -> dict:
             before.venue_name = before.venue_name or got["venue"]
             before.venue_city = before.venue_city or got["city"]
             luma_info = {**got, "url": before.luma_url}
-    turn = intake.step(body.history, before)
+    helper = None
+    topic = intake.current_topic(before)
+    if topic in ("venue", "food") and intake.UNSURE.search(last):
+        # They said what it is but not the number: let the venue/food answer land first, then look it up.
+        probe = intake.step(body.history, before) if not (before.venue_name if topic == "venue" else before.food) else None
+        b2 = probe.brief if probe else before
+        helper = intake.help_unsure(topic, b2)
+    turn = intake.step(body.history, before, lookup=helper["summary"] if helper else "")
     out = turn.model_dump()
     out["luma"] = luma_info
+    out["helper"] = helper
     b = turn.brief
     if b.venue_name and b.venue_name != before.venue_name:  # new venue mentioned: find it on the map
         out["venue_match"] = intake.lookup_venue(b.venue_name, b.venue_city)
     return out
+
+
+class DraftIn(BaseModel):
+    topic: str
+    brief: dict = {}
+    contact: str = ""
+
+
+@app.post("/api/draft")
+def draft(body: DraftIn) -> dict:
+    from . import intake
+    d = intake.draft_message(body.topic, intake.Brief.model_validate(body.brief or {}), body.contact)
+    return {**d.model_dump(), "contact": body.contact}
 
 
 @app.post("/api/run")
