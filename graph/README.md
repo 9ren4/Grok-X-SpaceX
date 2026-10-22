@@ -1,4 +1,4 @@
-# graph/: Community Knowledge Graph (WP4)
+get # graph/: Community Knowledge Graph (WP4)
 
 A single static page (`index.html`, Cytoscape.js 3.30.2 from cdnjs) that draws the shared memory.
 
