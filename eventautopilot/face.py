@@ -13,17 +13,17 @@ from .models import RunResult
 
 def publish(result: RunResult, visual_path: Path | None = None) -> dict:
     """Pass visual_path when the square visual is already rendered, to skip re-rendering."""
-    out = {"visual_path": "", "visual_url": "", "ghost_url": "", "notion_url": ""}
+    out = {"visual_path": "", "visual_url": "", "banner_url": "", "ghost_url": "", "notion_url": ""}
 
     try:
         from . import visuals
         path = Path(visual_path) if visual_path else visuals.render(result)
         out["visual_path"] = str(path)
+        out["visual_url"] = visuals.upload(path)
         try:
-            visuals.render(result, size="banner")
+            out["banner_url"] = visuals.upload(visuals.render(result, size="banner"))
         except Exception as e:  # banner is a stretch, never block on it
             print(f"visuals: banner failed ({e})")
-        out["visual_url"] = visuals.upload(path)
     except Exception as e:
         print(f"visuals: failed ({e})")
 
@@ -38,7 +38,7 @@ def publish(result: RunResult, visual_path: Path | None = None) -> dict:
     try:
         from . import notion_sync
         out["notion_url"] = notion_sync.push(
-            result, visual_url=out["visual_url"], ghost_url=out["ghost_url"]
+            result, visual_url=out["visual_url"], ghost_url=out["ghost_url"], banner_url=out["banner_url"]
         )
     except Exception as e:
         print(f"notion: failed ({e})")

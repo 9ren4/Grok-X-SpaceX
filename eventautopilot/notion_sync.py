@@ -110,6 +110,10 @@ def para_rich(rich: list[dict]) -> dict:
     return _block("paragraph", rich[:MAX_RICH_ITEMS])
 
 
+def bullet_rich(rich: list[dict]) -> dict:
+    return _block("bulleted_list_item", rich)
+
+
 def bullet(text: str) -> dict:
     return _block("bulleted_list_item", rt(text))
 
@@ -172,7 +176,7 @@ def baseline_hours() -> float:
 
 
 def build_blocks(result: RunResult, visual_url: str = "", ghost_url: str = "",
-                 approvals_url: str = "") -> list[dict]:
+                 approvals_url: str = "", sections: list[tuple[str, str]] | None = None) -> list[dict]:
     s = result.spec
     cur = s.currency
     hours = result.hours_saved or baseline_hours()
@@ -224,7 +228,11 @@ def build_blocks(result: RunResult, visual_url: str = "", ghost_url: str = "",
         blocks.append(para(f"📰 Newsletter subject: {result.artifacts.newsletter_subject}"))
 
     blocks.append(h2("✅ Approvals"))
-    if approvals_url:
+    if sections:
+        blocks.append(para("Every post is a Draft in 📣 Posts. Every cost is linked into 💷 Money."))
+        for label, link in sections:
+            blocks.append(bullet_rich(rt(label + " ↗", link, bold=True)))
+    elif approvals_url:
         blocks.append(para_rich(rt("Flip Status → Approved for each artifact in the ") +
                                 rt("Approvals database ↗", approvals_url, bold=True)))
     else:
@@ -452,18 +460,20 @@ def _plain(block: dict) -> str:
 
 def _sync_from_notion(n: Notion, state: dict) -> dict[str, str]:
     """Rebuild state from what is actually on the parent page, so several machines can push
-    to the same workspace without duplicating pages or the dashboard. Returns {title: page_id}."""
+    to the same workspace without duplicating pages or the dashboard. Returns {title: [page_id, ...]}."""
     kids = n.children(config.NOTION_PARENT_PAGE_ID)
     dash = next((b["id"] for b in kids if b["type"] == "callout"
                  and _plain(b).startswith("Hours saved:")), "")
     if dash:
         state["dashboard_block_id"] = dash
-    pages = {b["child_page"]["title"].removeprefix(PAGE_PREFIX): b["id"]
-             for b in kids if b["type"] == "child_page"
-             and b["child_page"]["title"].startswith(PAGE_PREFIX)}
+    pages: dict[str, list[str]] = {}
+    for b in kids:
+        if b["type"] == "child_page" and b["child_page"]["title"].startswith(PAGE_PREFIX):
+            pages.setdefault(b["child_page"]["title"].removeprefix(PAGE_PREFIX), []).append(b["id"])
     known = {e.get("page_id"): (k, e) for k, e in state.get("events", {}).items() if e.get("page_id")}
     events = {}
-    for title, pid in pages.items():
+    for title, pids in pages.items():
+        pid = pids[-1]
         if pid in known:
             k, e = known[pid]
             events[k] = e
@@ -534,19 +544,19 @@ def update_dashboard() -> None:
 
 # ---------------------------------------------------------------- push
 
-def push(result: RunResult, visual_url: str = "", ghost_url: str = "") -> str:
+def push(result: RunResult, visual_url: str = "", ghost_url: str = "", banner_url: str = "") -> str:
     """Create (or archive + recreate) the event page in Notion. Returns the page URL, or a Markdown path in dry-run."""
     if not config.HAS_NOTION:
         log("dry-run (no token)")
         return _dry_run(result, visual_url, ghost_url)
     try:
-        return _push_live(result, visual_url, ghost_url)
+        return _push_live(result, visual_url, ghost_url, banner_url)
     except Exception as e:
         log(f"API error, falling back to dry-run ({e})")
         return _dry_run(result, visual_url, ghost_url)
 
 
-def _push_live(result: RunResult, visual_url: str, ghost_url: str) -> str:
+def _push_live(result: RunResult, visual_url: str, ghost_url: str, banner_url: str = "") -> str:
     s = result.spec
     key = s.id or _slug(s.title)
     n = Notion(config.NOTION_TOKEN)
@@ -554,12 +564,13 @@ def _push_live(result: RunResult, visual_url: str, ghost_url: str) -> str:
     pages = _sync_from_notion(n, state)
     events = state["events"]
 
+    from . import workspace  # imported here: workspace imports this module
+
     _ensure_dashboard(n, state)
-    _save_state(state)
-    db_id, db_url = _approvals_db(n, state)
+    ws = workspace.ensure(n, state)
     _save_state(state)
 
-    # Idempotency: archive the previous page + approval rows for this event, whoever pushed them.
+    # Idempotency: archive the previous page for this event, whoever pushed it.
     title = s.title or "Untitled event"
     for k in [k for k, e in events.items() if e.get("title") == title or k == key]:
         old = events.pop(k)
@@ -568,11 +579,10 @@ def _push_live(result: RunResult, visual_url: str, ghost_url: str) -> str:
             n.archive_page(old["page_id"])
         for rid in old.get("approval_row_ids", []):
             n.archive_page(rid)
-    if title in pages:
-        n.archive_page(pages[title])
-    _archive_rows_for(n, db_id, title)
+    for pid in pages.get(title, []):
+        n.archive_page(pid)
 
-    blocks = build_blocks(result, visual_url, ghost_url, db_url)
+    blocks = build_blocks(result, visual_url, ghost_url, sections=workspace.section_links(ws))
     page: dict[str, Any] = {
         "parent": {"type": "page_id", "page_id": config.NOTION_PARENT_PAGE_ID},
         "properties": {"title": {"title": rt(f"{PAGE_PREFIX}{title}")}},
@@ -586,22 +596,8 @@ def _push_live(result: RunResult, visual_url: str, ghost_url: str) -> str:
         n.append(page_id, blocks[MAX_CHILDREN:])
     log(f"page created {url}")
 
-    row_ids = []
-    for r in approval_rows(result, visual_url, ghost_url):
-        props: dict[str, Any] = {
-            "Name": {"title": rt(r["name"])},
-            "Event": {"rich_text": rt(s.title)},
-            "Status": {"select": {"name": "Draft"}},
-            "Preview": {"rich_text": rt(r["preview"]) if r["preview"] else []},
-            "Image": {"url": r["image"] or None},
-            "Link": {"url": r["link"] or (url if r["name"] == "Event page copy" else None)},
-        }
-        try:
-            row = n.req("POST", "/pages", {"parent": {"database_id": db_id}, "properties": props})
-            row_ids.append(row["id"])
-        except NotionError as e:
-            log(f"approval row {r['name']} failed ({e})")
-    log(f"{len(row_ids)} approval rows (Draft)")
+    workspace.populate(n, ws, result, visual_url, banner_url)
+    row_ids: list[str] = []
 
     events[key] = {"page_id": page_id, "url": url, "title": s.title,
                    "hours_saved": result.hours_saved or baseline_hours(), "approval_row_ids": row_ids}
