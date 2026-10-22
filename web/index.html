@@ -261,6 +261,9 @@ async function send(text) {
     history.push({ role: "assistant", content: turn.reply });
     const msg = h("div", { class: "msg bot" }, h("div", { class: "who" }, "Autopilot"), turn.reply);
     thread.append(msg);
+    if (turn.luma) msg.append(h("div", { class: "venue" }, h("div", { class: "vbody" },
+      h("b", {}, `📋 ${turn.luma.registered} registered on Luma`), turn.luma.title || "",
+      h("div", { style: "margin-top:4px" }, h("a", { href: turn.luma.url, target: "_blank" }, "Open on Luma ↗")))));
     if (turn.venue_match) msg.append(venueCard(turn.venue_match));
     else if (turn.venue_match === null) msg.append(h("div", { class: "sub" }, `Couldn't find "${brief.venue_name}" on the map; I'll keep the name as you said it.`));
     if (turn.done) {

@@ -89,8 +89,18 @@ def status() -> dict:
 def intake_turn(body: IntakeIn) -> dict:
     from . import intake
     before = intake.Brief.model_validate(body.brief or {})
+    last = next((m["content"] for m in reversed(body.history) if m.get("role") == "user"), "")
+    luma_info = None
+    m = intake.LUMA_LINK.search(last)
+    if m and m.group(0) != before.luma_url:  # check who's registered before Grok asks about headcount
+        before.luma_url = m.group(0) if "://" in m.group(0) else "https://" + m.group(0)
+        got = intake.luma_registrations(before.luma_url)
+        if got:
+            before.luma_registered, before.luma_title = got
+            luma_info = {"registered": got[0], "title": got[1], "url": before.luma_url}
     turn = intake.step(body.history, before)
     out = turn.model_dump()
+    out["luma"] = luma_info
     b = turn.brief
     if b.venue_name and b.venue_name != before.venue_name:  # new venue mentioned: find it on the map
         out["venue_match"] = intake.lookup_venue(b.venue_name, b.venue_city)

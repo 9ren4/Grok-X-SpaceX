@@ -43,6 +43,8 @@ class Brief(BaseModel):
     total_budget: float | None = None
     channels: list[str] = Field(default_factory=list)   # Newsletter, Discord, LinkedIn, WhatsApp group
     luma_url: str = ""
+    luma_registered: int | None = None                  # live registration count from Luma
+    luma_title: str = ""
     notes: str = ""
     covered: list[str] = Field(default_factory=list)    # topics asked (answered or skipped)
 
@@ -55,13 +57,17 @@ class Turn(BaseModel):
 
 SYSTEM = f"""You are Event Autopilot's intake assistant. Interview a community organiser about their event
 before anything is planned. Topics, in this order: {", ".join(TOPICS)}.
-- basics: what the event is, date and start time, roughly how many people.
+- basics: what the event is, date and start time, the Luma link if they have one, and headcount.
+  Headcount: if brief.luma_registered is set, do NOT ask how many people. Say Luma shows that many
+  registered and ask whether they're expecting more (walk-ins, late sign-ups) and roughly how many in total.
+  Set attendees to the total they expect, or to luma_registered if they don't expect more.
+  If there is no Luma link, ask for it once; if they have none, ask roughly how many people.
 - venue: is a spot booked? which one, which city, hire cost.
 - food: what food/drink, which supplier, what it costs.
 - sponsorship: any sponsors? names, amounts, confirmed or still asking.
 - volunteers: who is helping (names).
 - budget: total budget, if there is one.
-- posts: which channels to post on (Newsletter, Discord, LinkedIn, WhatsApp group) and the Luma link if any.
+- posts: which channels to post on (Newsletter, Discord, LinkedIn, WhatsApp group).
 Rules:
 - Ask ONE short, friendly question per turn about the next topic not yet in brief.covered. Skip topics the
   organiser already answered in passing (still add them to covered).
@@ -89,8 +95,10 @@ def step(history: list[dict], brief: Brief) -> Turn:
     parsed, _tier = llm.complete_json(SYSTEM, user, Turn, fast=True)
     if parsed is not None:
         parsed.brief.covered = [t for t in TOPICS if t in set(parsed.brief.covered) | set(brief.covered)]
-        for f in ("venue_address", "venue_confirmed", "store_consent"):  # set by the UI, not by Grok
+        for f in ("venue_address", "venue_confirmed", "store_consent",  # set by the UI / server, not Grok
+                  "luma_registered", "luma_title"):
             setattr(parsed.brief, f, getattr(brief, f))
+        parsed.brief.luma_url = brief.luma_url or parsed.brief.luma_url
         if all(t in parsed.brief.covered for t in TOPICS):
             parsed.done = True
         return parsed
@@ -128,6 +136,27 @@ def lookup_venue(name: str, city: str = "") -> dict | None:
             "lat": float(h["lat"]), "lon": float(h["lon"])}
 
 
+LUMA_LINK = re.compile(r"(?:https?://)?(?:www\.)?(?:lu\.ma|luma\.com)/[\w-]+", re.I)
+
+
+def luma_registrations(url: str) -> tuple[int, str] | None:
+    """Live registered-guest count and title for a Luma event (not cached: the number changes)."""
+    from . import luma
+    try:
+        ref = luma.parse_ref(url)
+        with httpx.Client(timeout=10, follow_redirects=True) as client:
+            evt = ref
+            if not ref.startswith("evt-"):
+                data = luma._get(client, "/url", url=ref).get("data") or {}
+                evt = data.get("api_id") or ""
+            if not evt:
+                return None
+            raw = luma._get(client, "/event/get", event_api_id=evt)
+        return int(raw.get("guest_count") or 0), (raw.get("event") or {}).get("name", "")
+    except Exception:  # noqa: BLE001 — a convenience, never block the interview
+        return None
+
+
 def to_source(b: Brief) -> str:
     """Input string for pipeline.run: the Luma link if given, else a one-liner built from the answers."""
     if b.luma_url:
@@ -149,8 +178,10 @@ VENUE = re.compile(r"venue|hire|room|space|hall", re.I)
 def apply_basics(spec: EventSpec, b: Brief) -> None:
     if b.title and not spec.title:
         spec.title = b.title
-    if b.attendees:
-        spec.expected_attendees = b.attendees
+    if b.attendees or b.luma_registered:
+        spec.expected_attendees = b.attendees or b.luma_registered
+    if b.luma_registered is not None:
+        spec.missing = [m for m in spec.missing if "attend" not in m and "people" not in m]
     if b.venue_name:
         spec.venue.name = b.venue_name
     if b.venue_city:
